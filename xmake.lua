@@ -19,55 +19,66 @@ if is_mode("debug") then
     add_defines("DEBUG_MODE")
 end
 
-target("common")
-    set_kind("static")
-    set_languages("cxx17")
-    add_files("src/utils.cc")
-    add_cxflags("-fPIC")
-target_end()
-
 if has_config("cpu") then
-add_defines("ENABLE_CPU")
-target("cpu")
-    set_kind("shared")
-    set_languages("cxx17")
-    add_files("src/ops/*/cpu/*.cc")
-    add_deps("common")
-target_end()
+
+    add_defines("ENABLE_CPU")
+    target("cpu")
+        set_kind("static")
+
+        if not is_plat("windows") then
+            add_cxflags("-fPIC")
+        end
+
+        set_languages("cxx17")
+        add_files("src/devices/cpu/*.cc", "src/ops/*/cpu/*.cc")
+        add_cxflags("-fopenmp")
+        add_ldflags("-fopenmp")
+    target_end()
 
 end
 
 if has_config("nv-gpu") then
 
-add_defines("ENABLE_NV_GPU")
-target("nv-gpu")
-    set_kind("shared")
-    set_languages("cxx17")
-    add_cuflags("-arch=sm_80", "--expt-relaxed-constexpr", "--allow-unsupported-compiler",{force = true})
-    add_files("src/ops/*/cuda/*.cu")
-    set_toolchains("cuda")
-    set_policy("build.cuda.devlink", true)
-    add_deps("common")
-target_end()
+    add_defines("ENABLE_NV_GPU")
+    target("nv-gpu")
+        set_kind("static")
+        set_policy("build.cuda.devlink", true)
+
+        set_toolchains("cuda")
+        add_links("cublas")
+        add_cugencodes("native")
+
+        if is_plat("windows") then
+            add_cuflags("-Xcompiler=/utf-8", "--expt-relaxed-constexpr", "--allow-unsupported-compiler")
+        else
+            add_cuflags("-Xcompiler=-fPIC")
+            add_culdflags("-Xcompiler=-fPIC")
+        end
+
+        set_languages("cxx17")
+        add_files("src/ops/*/cuda/*.cu")
+    target_end()
 
 end
 
 target("operators")
     set_kind("shared")
-    set_languages("c11")
-    add_files("src/operators.c")
-    add_deps("common")
-if has_config("cpu") then
-    add_deps("cpu")
-end
-if has_config("nv-gpu") then
-    add_deps("nv-gpu")
-end
+
+    if has_config("cpu") then
+        add_deps("cpu")
+    end
+    if has_config("nv-gpu") then
+        add_deps("nv-gpu")
+    end
+
+    set_languages("cxx17")
+    add_files("src/ops/*/operator.cc")
 target_end()
 
 target("main")
     set_kind("binary")
-    set_languages("cxx17")
-    add_files("src/main.cpp")
     add_deps("operators")
+
+    set_languages("c11")
+    add_files("src/main.c")
 target_end()
