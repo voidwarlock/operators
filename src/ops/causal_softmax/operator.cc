@@ -1,13 +1,16 @@
 #include "../utils.h"
-#include "causal_softmax.h"
-#include "causal_softmax_config.h"
+#include "ops/causal_softmax/causal_softmax.h"
 
 #ifdef ENABLE_CPU
 #include "cpu/causal_softmax_cpu.h"
 #endif
 #ifdef ENABLE_NV_GPU
-#include "cuda/causal_softmax.cuh"
 #include "../../devices/cuda/common_cuda.h"
+#include "cuda/causal_softmax.cuh"
+#endif
+#ifdef ENABLE_CAMBRICON_MLU
+#include "bang/causal_softmax_cnnl.h"
+#include "bang/causal_softmax_bang.h"
 #endif
 
 struct CausalSoftmaxDescriptor {
@@ -22,13 +25,14 @@ __C CausalSoftmaxDescriptor *createCausalSoftmaxDescriptor(Device device, void *
 #endif
 #ifdef ENABLE_NV_GPU
         case DevNvGpu: {
-            ASSERT_VALID_PTR(config);
-            CausalSoftmaxCudaConfig *cuda_config = (CausalSoftmaxCudaConfig *) config;
-            return (CausalSoftmaxDescriptor *) (new CausalSoftmaxCudaDescriptor{
-                device,
-                ROUND_UP_DIV(cuda_config->max_dim, MAX_THREADS_PER_BLOCK)});
+            return (CausalSoftmaxDescriptor *) (new CausalSoftmaxCudaDescriptor{device});
         }
 
+#endif
+#ifdef ENABLE_CAMBRICON_MLU
+        case DevCambriconMlu: {
+            return (CausalSoftmaxDescriptor *) (new CausalSoftmaxBangDescriptor(device));
+        }
 #endif
         default:
             PANIC(UnsupportedDevice);
@@ -48,12 +52,18 @@ __C void destroyCausalSoftmaxDescriptor(CausalSoftmaxDescriptor *descriptor) {
             delete (CausalSoftmaxCudaDescriptor *) (descriptor);
             break;
 #endif
+#ifdef ENABLE_CAMBRICON_MLU
+        case DevCambriconMlu: {
+            delete (CausalSoftmaxBangDescriptor *) (descriptor);
+            break;
+        }
+#endif
         default:
             PANIC(UnsupportedDevice);
     }
 }
 
-__C void causalSoftmax(CausalSoftmaxDescriptor *descriptor, MutTensor y, void *stream) {
+__C void causalSoftmax(CausalSoftmaxDescriptor *descriptor, Tensor y, void *stream) {
     switch (descriptor->device) {
 #ifdef ENABLE_CPU
         case DevCpu:
@@ -63,6 +73,12 @@ __C void causalSoftmax(CausalSoftmaxDescriptor *descriptor, MutTensor y, void *s
 #ifdef ENABLE_NV_GPU
         case DevNvGpu:
             causal_softmax_nv_gpu_f16((CausalSoftmaxCudaDescriptor *) descriptor, y, stream);
+            break;
+#endif
+#ifdef ENABLE_CAMBRICON_MLU
+        case DevCambriconMlu:
+            // causal_softmax_bang_f16(y, y, stream);
+            causal_softmax_cnnl_f16(y, stream);
             break;
 #endif
         default:

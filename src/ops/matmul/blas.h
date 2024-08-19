@@ -1,10 +1,13 @@
 #ifndef __BLAS_H__
 #define __BLAS_H__
 
-#include "../../operators.h"
+#include "../utils.h"
+#include "operators.h"
+#include <algorithm>
 #include <stdint.h>
 
-struct BlasMatrix {
+typedef struct BlasMatrix {
+    int ndim;
     int batch;
     int64_t stride;
     int rows;
@@ -14,21 +17,23 @@ struct BlasMatrix {
 
     BlasMatrix() {}
 
-    BlasMatrix(TensorLayout layout) {
-        if (layout.ndim == 2) {
+    BlasMatrix(TensorLayout *layout) {
+        if (layout->ndim == 2) {
+            this->ndim = 2;
             this->batch = 1;
             this->stride = 0;
-            this->rows = layout.shape[0];
-            this->cols = layout.shape[1];
-            this->row_stride = layout.strides[0] / layout.dt.size;
-            this->col_stride = layout.strides[1] / layout.dt.size;
-        } else if (layout.ndim == 3) {
-            this->batch = layout.shape[0];
-            this->stride = this->batch == 1 ? 0 : layout.strides[0] / layout.dt.size;
-            this->rows = layout.shape[1];
-            this->cols = layout.shape[2];
-            this->row_stride = layout.strides[1] / layout.dt.size;
-            this->col_stride = layout.strides[2] / layout.dt.size;
+            this->rows = layout->shape[0];
+            this->cols = layout->shape[1];
+            this->row_stride = layout->strides[0] / layout->dt.size;
+            this->col_stride = layout->strides[1] / layout->dt.size;
+        } else if (layout->ndim == 3) {
+            this->ndim = 3;
+            this->batch = layout->shape[0];
+            this->stride = this->batch == 1 ? 0 : layout->strides[0] / layout->dt.size;
+            this->rows = layout->shape[1];
+            this->cols = layout->shape[2];
+            this->row_stride = layout->strides[1] / layout->dt.size;
+            this->col_stride = layout->strides[2] / layout->dt.size;
         } else {
             PANIC(InvalidMatrixShape);
         }
@@ -39,7 +44,7 @@ struct BlasMatrix {
         }
     }
 
-    bool match_batch(uint64_t batch) const {
+    bool match_batch(int batch) const {
         return this->batch == batch || this->batch == 1;
     }
 
@@ -55,7 +60,7 @@ struct BlasMatrix {
             return this->row_stride;
         }
     }
-};
+} BlasMatrix;
 
 struct MatmulInfo {
     BlasMatrix a_matrix;
@@ -68,7 +73,7 @@ struct MatmulInfo {
 
     int m, n, k, batch;
 
-    MatmulInfo(MutTensor c, ConstTensor a, ConstTensor b) {
+    MatmulInfo(Tensor c, Tensor a, Tensor b, bool col_major = true) {
         a_matrix = BlasMatrix(a.layout);
         b_matrix = BlasMatrix(b.layout);
         c_matrix = BlasMatrix(c.layout);
@@ -86,9 +91,7 @@ struct MatmulInfo {
             PANIC(InvalidBatchSize);
         }
 
-        if (c_matrix.row_stride == 1) {
-            // Nothing to do
-        } else {
+        if ((col_major && c_matrix.col_stride == 1) || (!col_major && c_matrix.row_stride == 1)) {
             c_matrix.transpose();
             b_matrix.transpose();
             a_matrix.transpose();

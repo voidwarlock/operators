@@ -1,8 +1,12 @@
 ﻿#ifndef __CPU_RMS_NORM_H__
 #define __CPU_RMS_NORM_H__
 
-#include "../../../operators.h"
+#include "operators.h"
 
-void rms_norm_cpu_f16(MutTensor y, ConstTensor x, ConstTensor w, float epsilon);
+struct RMSNormCpuDescriptor {
+    Device device;
+};
+
+void rms_norm_cpu_f16(Tensor y, Tensor x, Tensor w, float epsilon);
 
 #endif// __CPU_RMS_NORM_H__

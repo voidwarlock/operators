@@ -6,8 +6,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..",
 from operatorspy import (
     open_lib,
     to_tensor,
-    MutableTensor,
-    ConstTensor,
+    CTensor,
     DeviceEnum,
 )
 
@@ -24,9 +23,9 @@ def matmul(c, beta, a, b, alpha):
 
 
 def test(lib, descriptor, torch_device):
-    c = torch.zeros((3, 3, 4), dtype=torch.float16).to(torch_device)
-    a = torch.rand((1, 3, 5), dtype=torch.float16).to(torch_device)
-    b = torch.rand((3, 5, 4), dtype=torch.float16).to(torch_device)
+    c = torch.zeros((1, 2048), dtype=torch.float16).to(torch_device)
+    a = torch.rand((1, 2048), dtype=torch.float16).to(torch_device)
+    b = torch.rand((2048, 2048), dtype=torch.float16).to(torch_device)
 
     beta = 0.0
     alpha = 1.0
@@ -34,10 +33,10 @@ def test(lib, descriptor, torch_device):
     ans = matmul(c, beta, a, b, alpha)
     lib.matmul(
         descriptor,
-        to_tensor(c),
+        to_tensor(c, lib),
         beta,
-        to_tensor(a, False),
-        to_tensor(b, False),
+        to_tensor(a, lib),
+        to_tensor(b, lib),
         alpha,
         None,
     )
@@ -60,6 +59,12 @@ def test_cuda(lib):
     test(lib, descriptor, "cuda")
     lib.destroyMatmulDescriptor(descriptor)
 
+def test_bang(lib):
+    import torch_mlu
+    device = DeviceEnum.DEVICE_BANG
+    descriptor = lib.createMatmulDescriptor(device, None)
+    test(lib, descriptor, "mlu")
+    lib.destroyMatmulDescriptor(descriptor)
 
 if __name__ == "__main__":
     args = get_args()
@@ -68,10 +73,10 @@ if __name__ == "__main__":
     lib.destroyMatmulDescriptor.argtypes = [c_void_p]
     lib.matmul.argtypes = [
         c_void_p,
-        MutableTensor,
+        CTensor,
         c_float,
-        ConstTensor,
-        ConstTensor,
+        CTensor,
+        CTensor,
         c_float,
         c_void_p,
     ]
@@ -79,3 +84,5 @@ if __name__ == "__main__":
         test_cpu(lib)
     if args.cuda:
         test_cuda(lib)
+    if args.bang:
+        test_bang(lib)
