@@ -8,9 +8,13 @@ infiniopStatus_t createMusaHandle(MusaHandle_t* handle_ptr, int device_id) {
         return STATUS_BAD_DEVICE;
     }
 
-    // if (musaSetDevice(device_id) != musaSuccess){
-    //     return STATUS_BAD_DEVICE;
-    // }
+    int current_device;
+    if (musaGetDevice(&current_device) != musaSuccess) {
+        return STATUS_BAD_DEVICE; 
+    }
+    if (current_device != device_id && musaSetDevice(device_id) != musaSuccess) {
+        return STATUS_BAD_DEVICE;
+    }
 
     auto mublas_pool = std::make_shared<Pool<mublasHandle_t>>();
     mublasHandle_t *mublas_handle = new mublasHandle_t;

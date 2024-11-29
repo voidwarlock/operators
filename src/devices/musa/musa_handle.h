@@ -7,6 +7,7 @@
 #include "ops/matmul/matmul.h"
 #include <memory>
 #include <musa.h>
+#include <musa_runtime_api.h>
 #include <mudnn.h>
 #include <mublas.h>
 
@@ -25,7 +26,11 @@ template<typename T>
 void use_mublas(std::shared_ptr<Pool<mublasHandle_t>> mublas_handles_t, int device_id, MUstream stream, T const &f) {
     mublasHandle_t *handle = mublas_handles_t->pop();
     if (!handle) {
-        // musaSetDevice(device_id);
+        int current_device;
+        musaGetDevice(&current_device);
+        if (current_device != device_id) {
+            musaSetDevice(device_id);
+        }
         mublasHandle_t *handle = new mublasHandle_t;
         mublasCreate(handle);
     }

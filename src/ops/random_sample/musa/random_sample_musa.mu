@@ -168,9 +168,13 @@ infiniopStatus_t musaRandomSample(RandomSampleMusaDescriptor_t desc,
                                   int topk,
                                   float temperature,
                                   void *stream) {
-//    if (musaSetDevice(desc->device_id) != musaSuccess) {
-//        return STATUS_BAD_DEVICE;
-//    }
+    int current_device;
+    if (musaGetDevice(&current_device) != musaSuccess) {
+        return STATUS_BAD_DEVICE; 
+    }
+    if (current_device != desc->device_id && musaSetDevice(desc->device_id) != musaSuccess) {
+        return STATUS_BAD_DEVICE;
+    }   
     if (dtype_eq(desc->dtype, F16)) {
         random_sample_nv_gpu_f16(desc, workspace, result, probs, random_val, topp, topk, temperature, stream);
         return STATUS_SUCCESS;

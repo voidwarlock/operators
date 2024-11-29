@@ -61,9 +61,13 @@ void rearrange_mt_gpu(RearrangeMusaDescriptor_t desc, void *y, void const *x, vo
 }
 infiniopStatus_t musaRearrange(RearrangeMusaDescriptor_t desc,
                                void *dst, void const *src, void *stream) {
-//	if(musaSetDevice(desc->device_id) != musaSuccess){
-//        return STATUS_BAD_DEVICE;
-//    }	
+    int current_device;
+    if (musaGetDevice(&current_device) != musaSuccess) {
+        return STATUS_BAD_DEVICE; 
+    }
+    if (current_device != desc->device_id && musaSetDevice(desc->device_id) != musaSuccess) {
+        return STATUS_BAD_DEVICE;
+    }   
     rearrange_mt_gpu(desc, dst, src, stream);
     return STATUS_SUCCESS;
 }
