@@ -46,4 +46,12 @@ const static struct DataLayout
     F64  = {1, 1, 8, 52, 11};
 // clang-format on
 
+DT get_F16();
+
+DT get_U32();
+
+DT get_F32();
+
+DT get_U64();
+
 #endif// __DATA_TYPE_H__
