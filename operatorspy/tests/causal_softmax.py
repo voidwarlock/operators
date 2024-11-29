@@ -119,6 +119,16 @@ def test_maca(lib, test_cases):
 
     destroy_handle(lib, handle)
 
+def test_musa(lib, test_cases):
+    import torch_musa
+    device = DeviceEnum.DEVICE_MUSA
+    
+    handle = create_handle(lib, device)
+    for x_shape, x_stride in test_cases:
+        test(lib, handle, "musa", x_shape, x_stride)
+        
+    destroy_handle(lib, handle)
+
 if __name__ == "__main__":
     test_cases = [
         # x_shape, x_stride
@@ -161,6 +171,8 @@ if __name__ == "__main__":
         test_ascend(lib, test_cases)
     if args.maca:
         test_maca(lib, test_cases)
+    if args.musa:
+        test_musa(lib, test_cases)
     if not (args.cpu or args.cuda or args.bang or args.ascend or args.maca):
         test_cpu(lib, test_cases)
     print("\033[92mTest passed!\033[0m")
