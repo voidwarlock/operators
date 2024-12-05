@@ -15,6 +15,7 @@ struct MusaContext {
     Device device;
     int device_id;
     std::shared_ptr<Pool<mublasHandle_t>> mublas_handles_t;
+    musaDeviceProp prop;
 };
 typedef struct MusaContext *MusaHandle_t;
 

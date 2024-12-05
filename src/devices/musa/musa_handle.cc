@@ -16,12 +16,17 @@ infiniopStatus_t createMusaHandle(MusaHandle_t* handle_ptr, int device_id) {
         return STATUS_BAD_DEVICE;
     }
 
+    // set CUDA device property
+    musaDeviceProp prop;
+    musaGetDeviceProperties(&prop, device_id);
+
+
     auto mublas_pool = std::make_shared<Pool<mublasHandle_t>>();
     mublasHandle_t *mublas_handle = new mublasHandle_t;
     mublasCreate(mublas_handle);
     mublas_pool->push(mublas_handle);
 
-    *handle_ptr = new MusaContext{DevMtGpu, device_id, std::move(mublas_pool)};
+    *handle_ptr = new MusaContext{DevMtGpu, device_id, std::move(mublas_pool), std::move(prop)};
 
     return STATUS_SUCCESS;
 }

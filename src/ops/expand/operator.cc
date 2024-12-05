@@ -9,6 +9,10 @@
 #include "../../devices/cuda/cuda_handle.h"
 #include "cuda/expand.cuh"
 #endif
+#ifdef ENABLE_MT_GPU
+#include "musa/expand_musa.h"
+#endif
+
 
 __C infiniopStatus_t infiniopCreateExpandDescriptor(
     infiniopHandle_t handle,
@@ -29,6 +33,11 @@ __C infiniopStatus_t infiniopCreateExpandDescriptor(
 #ifdef ENABLE_CAMBRICON_MLU
         // TODO
 #endif
+#ifdef ENABLE_MT_GPU
+        case DevMtGpu: {
+            return musaCreateExpandDescriptor((MusaHandle_t) handle, (ExpandMusaDescriptor_t *) desc_ptr, y, x);
+        }
+#endif
     }
     return STATUS_BAD_DEVICE;
 }
@@ -48,6 +57,11 @@ __C infiniopStatus_t infiniopExpand(infiniopExpandDescriptor_t desc, void *y, vo
 #ifdef ENABLE_CAMBRICON_MLU
         // TODO
 #endif
+#ifdef ENABLE_MT_GPU
+        case DevMtGpu: {
+            return musaExpand((ExpandMusaDescriptor_t) desc, y, x, stream);
+        }
+#endif
     }
     return STATUS_BAD_DEVICE;
 }
@@ -66,6 +80,11 @@ __C infiniopStatus_t infiniopDestroyExpandDescriptor(infiniopExpandDescriptor_t 
 #endif
 #ifdef ENABLE_CAMBRICON_MLU
         // TODO
+#endif
+#ifdef ENABLE_MT_GPU
+        case DevMtGpu: {
+            return musaDestroyExpandDescriptor((ExpandMusaDescriptor_t) desc);
+        }
 #endif
     }
     return STATUS_BAD_DEVICE;
