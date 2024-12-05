@@ -9,6 +9,9 @@
 #include "../../devices/cuda/cuda_handle.h"
 #include "cuda/add.cuh"
 #endif
+#ifdef ENABLE_MT_GPU
+#include "musa/add_musa.h"
+#endif
 
 __C infiniopStatus_t infiniopCreateAddDescriptor(
     infiniopHandle_t handle,
@@ -30,6 +33,11 @@ __C infiniopStatus_t infiniopCreateAddDescriptor(
 #ifdef ENABLE_CAMBRICON_MLU
         // TODO
 #endif
+#ifdef ENABLE_MT_GPU
+        case DevMtGpu: {
+            return musaCreateAddDescriptor((MusaHandle_t) handle, (AddMusaDescriptor_t *) desc_ptr, c, a, b);
+        }
+#endif
     }
     return STATUS_BAD_DEVICE;
 }
@@ -49,6 +57,11 @@ __C infiniopStatus_t infiniopAdd(infiniopAddDescriptor_t desc, void *c, void con
 #ifdef ENABLE_CAMBRICON_MLU
         // TODO
 #endif
+#ifdef ENABLE_MT_GPU
+        case DevMtGpu: {
+            return musaAdd((AddMusaDescriptor_t) desc, c, a, b, stream);
+        }
+#endif
     }
     return STATUS_BAD_DEVICE;
 }
@@ -67,6 +80,11 @@ __C infiniopStatus_t infiniopDestroyAddDescriptor(infiniopAddDescriptor_t desc) 
 #endif
 #ifdef ENABLE_CAMBRICON_MLU
         // TODO
+#endif
+#ifdef ENABLE_MT_GPU
+        case DevMtGpu: {
+            return musaDestroyAddDescriptor((AddMusaDescriptor_t) desc);
+        }
 #endif
     }
     return STATUS_BAD_DEVICE;
