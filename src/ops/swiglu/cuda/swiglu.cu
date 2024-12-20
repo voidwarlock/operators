@@ -59,6 +59,8 @@ infiniopStatus_t cudaSwiGLU(SwiGLUCudaDescriptor_t desc,
                             void const *a,
                             void const *b,
                             void *stream) {
+    checkCudaError(cudaSetDevice(desc->device_id));
+
     if (dtype_eq(desc->dtype, F16)) {
         swiglu_nv_gpu_f16(desc, c, a, b, stream);
         return STATUS_SUCCESS;
