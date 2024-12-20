@@ -53,6 +53,8 @@ infiniopStatus_t cudaRoPE(RoPECudaDescriptor_t desc,
     if (t == nullptr || pos_ids == nullptr || sin_table == nullptr || cos_table == nullptr)
         return STATUS_BAD_PARAM;
 
+    checkCudaError(cudaSetDevice(desc->device_id));
+
     if (dtype_eq(desc->dtype, F16)) {
         rotary_embedding_nv_gpu_f16(desc,
                                     reinterpret_cast<half *>(t),

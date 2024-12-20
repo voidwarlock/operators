@@ -35,6 +35,7 @@ infiniopStatus_t cudaCreateSwiGLUDescriptor(CudaHandle_t handle,
     }
 
     *desc_ptr = new SwiGLUCudaDescriptor{DevNvGpu,
+                                         handle->device_id,
                                          dtype,
                                          seq_len,
                                          di,

@@ -6,6 +6,7 @@
 
 struct SwiGLUCudaDescriptor {
     Device device;
+    int device_id;
     DT dtype;
     uint64_t seq_len;
     uint64_t di;
