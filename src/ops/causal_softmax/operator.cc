@@ -18,6 +18,9 @@
 #ifdef ENABLE_ASCEND_NPU
 #include "ascend/causal_softmax_aclnn.h"
 #endif
+#ifdef ENABLE_METAX_GPU
+#include "maca/causal_softmax_maca.h"
+#endif
 
 __C infiniopStatus_t infiniopCreateCausalSoftmaxDescriptor(
     infiniopHandle_t handle,
@@ -43,6 +46,11 @@ __C infiniopStatus_t infiniopCreateCausalSoftmaxDescriptor(
 #ifdef ENABLE_ASCEND_NPU
         case DevAscendNpu: {
             return aclnnCreateCausalSoftmaxDescriptor((AscendHandle_t) handle, (CausalSoftmaxAclnnDescriptor_t *) desc_ptr, y_desc);
+        }
+#endif
+#ifdef ENABLE_METAX_GPU
+        case DevMetaxGpu: {
+            return macaCreateCausalSoftmaxDescriptor((MacaHandle_t) handle, (CausalSoftmaxMacaDescriptor_t *) desc_ptr, y_desc);
         }
 #endif
     }
@@ -73,6 +81,11 @@ __C infiniopStatus_t infiniopGetCausalSoftmaxWorkspaceSize(infiniopCausalSoftmax
             return aclnnGetCausalSoftmaxWorkspaceSize((CausalSoftmaxAclnnDescriptor_t) desc, size);
         }
 #endif
+#ifdef ENABLE_METAX_GPU
+        case DevMetaxGpu: {
+            return macaGetCausalSoftmaxWorkspaceSize((CausalSoftmaxMacaDescriptor_t) desc, size);
+        }
+#endif
     }
     return STATUS_BAD_DEVICE;
 }
@@ -100,6 +113,11 @@ __C infiniopStatus_t infiniopCausalSoftmax(infiniopCausalSoftmaxDescriptor_t des
             return aclnnCausalSoftmax((CausalSoftmaxAclnnDescriptor_t) desc, workspace, workspace_size, data, stream);
         }
 #endif
+#ifdef ENABLE_METAX_GPU
+        case DevMetaxGpu: {
+            return macaCausalSoftmax((CausalSoftmaxMacaDescriptor_t) desc, workspace, workspace_size, data, stream);
+        }
+#endif
     }
     return STATUS_BAD_DEVICE;
 }
@@ -125,6 +143,11 @@ __C infiniopStatus_t infiniopDestroyCausalSoftmaxDescriptor(infiniopCausalSoftma
 #ifdef ENABLE_ASCEND_NPU
         case DevAscendNpu: {
             return aclnnDestroyCausalSoftmaxDescriptor((CausalSoftmaxAclnnDescriptor_t) desc);
+        }
+#endif
+#ifdef ENABLE_METAX_GPU
+        case DevMetaxGpu: {
+            return macaDestroyCausalSoftmaxDescriptor((CausalSoftmaxMacaDescriptor_t) desc);
         }
 #endif
     }
