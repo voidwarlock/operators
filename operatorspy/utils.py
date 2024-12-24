@@ -50,6 +50,8 @@ def create_workspace(size, torch_device):
     if size == 0:
         return None
     import torch
+    if (torch_device == 'maca'):
+        return torch.zeros(size=(size,), dtype=torch.uint8, device='cuda')
     return torch.zeros(size=(size,), dtype=torch.uint8, device=torch_device)
 
 def create_handle(lib, device, id=0):
