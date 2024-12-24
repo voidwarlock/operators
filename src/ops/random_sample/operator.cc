@@ -14,6 +14,9 @@
 #ifdef ENABLE_ASCEND_NPU
 #include "ascend/random_sample.h"
 #endif
+#ifdef ENABLE_METAX_GPU
+#include "maca/random_sample_maca.h"
+#endif
 
 __C infiniopStatus_t infiniopCreateRandomSampleDescriptor(infiniopHandle_t handle, infiniopRandomSampleDescriptor_t *desc_ptr, infiniopTensorDescriptor_t result, infiniopTensorDescriptor_t probs) {
     switch (handle->device) {
@@ -36,6 +39,13 @@ __C infiniopStatus_t infiniopCreateRandomSampleDescriptor(infiniopHandle_t handl
         case DevAscendNpu: {
             return ascendCreateRandomSampleDescriptor((AscendHandle_t) handle,
                                                      (RandomSampleAscendDescriptor_t *) desc_ptr, result, probs);
+        }
+#endif
+#ifdef ENABLE_METAX_GPU
+        case DevMetaxGpu: {
+            return macaCreateRandomSampleDescriptor((MacaHandle_t) handle,
+                                                    (RandomSampleMacaDescriptor_t *) desc_ptr, result,
+                                                    probs);
         }
 #endif
     }
@@ -63,6 +73,11 @@ __C infiniopStatus_t infiniopGetRandomSampleWorkspaceSize(infiniopRandomSampleDe
 #ifdef ENABLE_ASCEND_NPU
         case DevAscendNpu: {
             return ascendGetRandomSampleWorkspaceSize((RandomSampleAscendDescriptor_t) desc, size);
+        }
+#endif
+#ifdef ENABLE_METAX_GPU
+        case DevMetaxGpu: {
+            return macaGetRandomSampleWorkspaceSize((RandomSampleMacaDescriptor_t) desc, size);
         }
 #endif
     }
@@ -98,6 +113,11 @@ __C infiniopStatus_t infiniopRandomSample(infiniopRandomSampleDescriptor_t desc,
             return ascendRandomSample((RandomSampleAscendDescriptor_t) desc, workspace, workspace_size, result, probs, random_val, topp, topk, temperature, stream);
         }
 #endif
+#ifdef ENABLE_METAX_GPU
+        case DevMetaxGpu: {
+            return macaRandomSample((RandomSampleMacaDescriptor_t) desc, workspace, workspace_size, result, probs, random_val, topp, topk, temperature, stream);
+        }
+#endif
     }
     return STATUS_BAD_DEVICE;
 }
@@ -120,6 +140,11 @@ __C infiniopStatus_t infiniopDestroyRandomSampleDescriptor(infiniopRandomSampleD
 #ifdef ENABLE_ASCEND_NPU
         case DevAscendNpu: {
             return ascendDestroyRandomSampleDescriptor((RandomSampleAscendDescriptor_t) desc);
+        }
+#endif
+#ifdef ENABLE_METAX_GPU
+        case DevMetaxGpu: {
+            return macaDestroyRandomSampleDescriptor((RandomSampleMacaDescriptor_t) desc);
         }
 #endif
     }
