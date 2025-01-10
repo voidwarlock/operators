@@ -2,11 +2,12 @@
 #define __DEVICE_H__
 
 enum DeviceEnum {
-    DevCpu,
-    DevNvGpu,
-    DevCambriconMlu,
-    DevAscendNpu,
-    DevMetaxGpu,
+    DevCpu = 0,
+    DevNvGpu = 1,
+    DevCambriconMlu = 2,
+    DevAscendNpu = 3,
+    DevMetaxGpu = 4,
+    DevMthreadsGpu = 5,
 };
 
 typedef enum DeviceEnum Device;

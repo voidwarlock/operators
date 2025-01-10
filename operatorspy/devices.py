@@ -4,3 +4,4 @@ class DeviceEnum:
     DEVICE_BANG = 2
     DEVICE_ASCEND = 3
     DEVICE_MACA = 4
+    DEVICE_MUSA = 5
