@@ -41,9 +41,17 @@ infiniopStatus_t cpuCreateConvDescriptor(infiniopHandle_t,
     uint64_t *x_shape = new uint64_t[ndim];
     uint64_t *w_shape = new uint64_t[ndim];
     uint64_t *y_shape = new uint64_t[ndim];
+    uint64_t *pad_ = new uint64_t[n];
+    int64_t *strides_ = new int64_t[n];
+    uint64_t *dilations_ = new uint64_t[n];
     memcpy(x_shape, x->shape, ndim * sizeof(uint64_t));
     memcpy(w_shape, w->shape, ndim * sizeof(uint64_t));
     memcpy(y_shape, y->shape, ndim * sizeof(uint64_t));
+    for (size_t i = 0; i < n; ++i) {
+        pad_[i] = pads_[i];
+        strides_[i] = reinterpret_cast<int64_t const *>(strides)[i];
+        dilations_[i] = reinterpret_cast<uint64_t const *>(dilations)[i];
+    }
 
     *desc_ptr = new ConvCpuDescriptor{
         DevCpu,
@@ -54,9 +62,9 @@ infiniopStatus_t cpuCreateConvDescriptor(infiniopHandle_t,
         x_shape,
         w_shape,
         y_shape,
-        reinterpret_cast<uint64_t const *>(pads),
-        reinterpret_cast<int64_t const *>(strides),
-        reinterpret_cast<uint64_t const *>(dilations),
+        pad_,
+        strides_,
+        dilations_,
     };
 
     return STATUS_SUCCESS;
@@ -74,6 +82,9 @@ infiniopStatus_t cpuDestroyConvDescriptor(ConvCpuDescriptor_t desc) {
     delete[] desc->x_shape;
     delete[] desc->w_shape;
     delete[] desc->y_shape;
+    delete[] desc->pads;
+    delete[] desc->strides;
+    delete[] desc->dilations;
     delete desc;
     return STATUS_SUCCESS;
 }
