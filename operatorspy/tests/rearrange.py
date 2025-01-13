@@ -56,11 +56,15 @@ def test(
             handle, ctypes.byref(descriptor), y_tensor.descriptor, x_tensor.descriptor
         )
     )
+
+    # Invalidate the shape and strides in the descriptor to prevent them from being directly used by the kernel
+    x_tensor.descriptor.contents.invalidate()
+    y_tensor.descriptor.contents.invalidate()
+
     check_error(
         lib.infiniopRearrange(descriptor, y_tensor.data, x_tensor.data, None)
     )
     assert torch.allclose(x, y, atol=0, rtol=1e-3)
-    print("Test passed!")
     check_error(lib.infiniopDestroyRearrangeDescriptor(descriptor))
 
 
@@ -141,3 +145,4 @@ if __name__ == "__main__":
         test_bang(lib, test_cases)
     if args.ascend:
         test_ascend(lib, test_cases)
+    print("\033[92mTest passed!\033[0m")

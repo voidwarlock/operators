@@ -100,6 +100,11 @@ def test(
         )
     )
 
+    # Invalidate the shape and strides in the descriptor to prevent them from being directly used by the kernel
+    a_tensor.descriptor.contents.invalidate()
+    b_tensor.descriptor.contents.invalidate()
+    c_tensor.descriptor.contents.invalidate()
+
     workspace_size = c_uint64(0)
     check_error(
         lib.infiniopGetMatmulWorkspaceSize(descriptor, ctypes.byref(workspace_size))
