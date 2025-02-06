@@ -227,7 +227,7 @@ if has_config("metax-gpu") then
 
     add_includedirs(MACA_ROOT .. "/include")
     add_linkdirs(MACA_ROOT .. "/lib")
-    add_linkdirs(MACA_ROOT .. "htgpu_llvm/lib")
+    -- add_linkdirs(MACA_ROOT .. "htgpu_llvm/lib")
     add_links("libhcdnn.so")
     add_links("libhcblas.so")
     add_links("libhcruntime.so")

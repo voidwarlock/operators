@@ -59,6 +59,8 @@ infiniopStatus_t macaSwiGLU(SwiGLUMacaDescriptor_t desc,
                             void const *a,
                             void const *b,
                             void *stream) {
+    checkMacaError(hcSetDevice(desc->device_id));
+
     if (dtype_eq(desc->dtype, F16)) {
         swiglu_mc_gpu_f16(desc, c, a, b, stream);
         return STATUS_SUCCESS;

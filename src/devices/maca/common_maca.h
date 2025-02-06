@@ -9,7 +9,7 @@
 
 #define checkMacaErrorWithCode(call, errorCode)                       \
     do {                                                              \
-        if (auto status = call; status != cudaSuccess) {              \
+        if (auto status = call; status != hcSuccess) {              \
             std::cerr << "MACA error: " << hcGetErrorString(status) \
                       << " in file " << __FILE__                      \
                       << ", function " << __func__                    \
@@ -39,7 +39,7 @@ typedef struct DTMcdnnMapping {
     hcdnnDataType_t hcdnn_type;
 } DTMcdnnMapping;
 
-// DT cudnnDataType_t mapping table
+// DT mcdnnDataType_t mapping table
 const DTMcdnnMapping dtMappings[] = {
     {F16, HCDNN_DATA_HALF},
     {F32, HCDNN_DATA_FLOAT},

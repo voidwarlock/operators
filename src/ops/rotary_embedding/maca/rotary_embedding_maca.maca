@@ -53,6 +53,8 @@ infiniopStatus_t macaRoPE(RoPEMacaDescriptor_t desc,
     if (t == nullptr || pos_ids == nullptr || sin_table == nullptr || cos_table == nullptr)
         return STATUS_BAD_PARAM;
 
+    checkMacaError(hcSetDevice(desc->device_id));
+
     if (dtype_eq(desc->dtype, F16)) {
         rotary_embedding_mc_gpu_f16(desc,
                                     reinterpret_cast<half *>(t),

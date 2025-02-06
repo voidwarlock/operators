@@ -35,6 +35,7 @@ infiniopStatus_t macaCreateSwiGLUDescriptor(MacaHandle_t handle,
     }
 
     *desc_ptr = new SwiGLUMacaDescriptor{DevMetaxGpu,
+                                         handle->device_id,
                                          dtype,
                                          seq_len,
                                          di,

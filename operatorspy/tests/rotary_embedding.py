@@ -45,7 +45,6 @@ def rotary_embedding(t, pos, theta, torch_device):
     )
     freqs = torch.outer(pos, freqs)
     freqs_cis = torch.polar(torch.ones_like(freqs), freqs)
-    
     t_ = torch.view_as_complex(t.reshape(*t.shape[:-1], -1, 2))
     freqs_cis = reshape_for_broadcast(freqs_cis, t_)
     t_out = torch.view_as_real(t_ * freqs_cis).flatten(2).to(t.dtype)
@@ -83,8 +82,7 @@ def test(lib, handle, torch_device, shape, strides=None, dtype=torch.float16):
         pos = pos.to(torch_device)
         t = t.to(torch_device)
     elif torch_device == 'maca':
-        ans = rotary_embedding(t, pos, theta, "cpu").to('cuda')
-        pos = pos.to(torch.int64)
+        ans = rotary_embedding(t, posTmp, theta, "cpu").to('cuda')
         pos = pos.to('cuda')
         t = t.to('cuda')
     else:
@@ -138,7 +136,6 @@ def test(lib, handle, torch_device, shape, strides=None, dtype=torch.float16):
             None,
         )
     )
-
     assert torch.allclose(t, ans, atol=1e-4, rtol=1e-2)
     check_error(lib.infiniopDestroyRoPEDescriptor(descriptor))
 
