@@ -9,7 +9,7 @@
 #include "../../devices/cuda/cuda_handle.h"
 #include "cuda/add.cuh"
 #endif
-#ifdef ENABLE_MT_GPU
+#ifdef ENABLE_MTHREADS_GPU
 #include "musa/add_musa.h"
 #endif
 
@@ -33,8 +33,8 @@ __C infiniopStatus_t infiniopCreateAddDescriptor(
 #ifdef ENABLE_CAMBRICON_MLU
         // TODO
 #endif
-#ifdef ENABLE_MT_GPU
-        case DevMtGpu: {
+#ifdef ENABLE_MTHREADS_GPU
+        case DevMthreadsGpu: {
             return musaCreateAddDescriptor((MusaHandle_t) handle, (AddMusaDescriptor_t *) desc_ptr, c, a, b);
         }
 #endif
@@ -57,8 +57,8 @@ __C infiniopStatus_t infiniopAdd(infiniopAddDescriptor_t desc, void *c, void con
 #ifdef ENABLE_CAMBRICON_MLU
         // TODO
 #endif
-#ifdef ENABLE_MT_GPU
-        case DevMtGpu: {
+#ifdef ENABLE_MTHREADS_GPU
+        case DevMthreadsGpu: {
             return musaAdd((AddMusaDescriptor_t) desc, c, a, b, stream);
         }
 #endif
@@ -81,8 +81,8 @@ __C infiniopStatus_t infiniopDestroyAddDescriptor(infiniopAddDescriptor_t desc) 
 #ifdef ENABLE_CAMBRICON_MLU
         // TODO
 #endif
-#ifdef ENABLE_MT_GPU
-        case DevMtGpu: {
+#ifdef ENABLE_MTHREADS_GPU
+        case DevMthreadsGpu: {
             return musaDestroyAddDescriptor((AddMusaDescriptor_t) desc);
         }
 #endif

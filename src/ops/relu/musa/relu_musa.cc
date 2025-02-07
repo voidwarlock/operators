@@ -28,7 +28,7 @@ infiniopStatus_t musaCreateReluDescriptor(MusaHandle_t handle,
     uint64_t data_size = std::accumulate(y->shape, y->shape + y->ndim, 1ULL, std::multiplies<uint64_t>());
 
     *desc_ptr = new ReluMusaDescriptor{
-        DevMtGpu,
+        DevMthreadsGpu,
         y->dt,
         handle->device_id,
         ndim,

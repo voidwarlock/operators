@@ -18,8 +18,8 @@ infiniopStatus_t musaCreateRMSNormDescriptor(MusaHandle_t handle, RMSNormMusaDes
         return STATUS_BAD_TENSOR_SHAPE;
     }
 
-    unsigned long int stride_y = y_desc->strides[0];
-    unsigned long int stride_x = x_desc->strides[0];
+    uint64_t stride_y = y_desc->strides[0];
+    uint64_t stride_x = x_desc->strides[0];
     auto w_datatype = w_desc->dt;
     *desc_ptr = new RMSNormMusaDescriptor{
         handle->device,
@@ -35,7 +35,7 @@ infiniopStatus_t musaCreateRMSNormDescriptor(MusaHandle_t handle, RMSNormMusaDes
     return STATUS_SUCCESS;
 }
 
-infiniopStatus_t musaGetRMSNormWorkspaceSize(RMSNormMusaDescriptor_t desc, unsigned long int *size) {
+infiniopStatus_t musaGetRMSNormWorkspaceSize(RMSNormMusaDescriptor_t desc, uint64_t *size) {
     *size = 0;
     return STATUS_SUCCESS;
 }

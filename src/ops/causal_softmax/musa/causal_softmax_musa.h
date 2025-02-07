@@ -8,13 +8,13 @@ struct CausalSoftmaxMusaDescriptor {
     Device device;
     int device_id;
     DT dtype;
-    unsigned long int batch_size;
-    unsigned long int stride_b;
-    unsigned long int seq_len;
-    unsigned long int stride_i;
-    unsigned long int total_seq_len;
-    unsigned long int stride_j;
-    unsigned int max_items_per_thread;
+    uint64_t batch_size;
+    uint64_t stride_b;
+    uint64_t seq_len;
+    uint64_t stride_i;
+    uint64_t total_seq_len;
+    uint64_t stride_j;
+    uint64_t max_items_per_thread;
 };
 
 typedef struct CausalSoftmaxMusaDescriptor *CausalSoftmaxMusaDescriptor_t;
@@ -23,11 +23,11 @@ infiniopStatus_t musaCreateCausalSoftmaxDescriptor(MusaHandle_t handle,
                                                    CausalSoftmaxMusaDescriptor_t *desc_ptr,
                                                    infiniopTensorDescriptor_t y_desc);
 
-infiniopStatus_t musaGetCausalSoftmaxWorkspaceSize(CausalSoftmaxMusaDescriptor_t desc, unsigned long int *size);
+infiniopStatus_t musaGetCausalSoftmaxWorkspaceSize(CausalSoftmaxMusaDescriptor_t desc, uint64_t *size);
 
 infiniopStatus_t musaCausalSoftmax(CausalSoftmaxMusaDescriptor_t desc,
                                    void *workspace,
-                                   unsigned long int workspace_size,
+                                   uint64_t workspace_size,
                                    void *data,
                                    void *stream);
 

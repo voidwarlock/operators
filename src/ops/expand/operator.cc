@@ -9,7 +9,7 @@
 #include "../../devices/cuda/cuda_handle.h"
 #include "cuda/expand.cuh"
 #endif
-#ifdef ENABLE_MT_GPU
+#ifdef ENABLE_MTHREADS_GPU
 #include "musa/expand_musa.h"
 #endif
 
@@ -33,8 +33,8 @@ __C infiniopStatus_t infiniopCreateExpandDescriptor(
 #ifdef ENABLE_CAMBRICON_MLU
         // TODO
 #endif
-#ifdef ENABLE_MT_GPU
-        case DevMtGpu: {
+#ifdef ENABLE_MTHREADS_GPU
+        case DevMthreadsGpu: {
             return musaCreateExpandDescriptor((MusaHandle_t) handle, (ExpandMusaDescriptor_t *) desc_ptr, y, x);
         }
 #endif
@@ -57,8 +57,8 @@ __C infiniopStatus_t infiniopExpand(infiniopExpandDescriptor_t desc, void *y, vo
 #ifdef ENABLE_CAMBRICON_MLU
         // TODO
 #endif
-#ifdef ENABLE_MT_GPU
-        case DevMtGpu: {
+#ifdef ENABLE_MTHREADS_GPU
+        case DevMthreadsGpu: {
             return musaExpand((ExpandMusaDescriptor_t) desc, y, x, stream);
         }
 #endif
@@ -81,8 +81,8 @@ __C infiniopStatus_t infiniopDestroyExpandDescriptor(infiniopExpandDescriptor_t 
 #ifdef ENABLE_CAMBRICON_MLU
         // TODO
 #endif
-#ifdef ENABLE_MT_GPU
-        case DevMtGpu: {
+#ifdef ENABLE_MTHREADS_GPU
+        case DevMthreadsGpu: {
             return musaDestroyExpandDescriptor((ExpandMusaDescriptor_t) desc);
         }
 #endif

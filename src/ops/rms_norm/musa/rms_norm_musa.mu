@@ -158,7 +158,7 @@ void rms_norm_mt_gpu_f16(RMSNormMusaDescriptor_t desc, void *y, void const *x, v
 
 infiniopStatus_t musaRMSNorm(RMSNormMusaDescriptor_t desc,
                                    void *workspace,
-                                   unsigned long int workspace_size,
+                                   uint64_t workspace_size,
                                    void *y, void const *x, void const *w,
                                    void *stream){
     int current_device;

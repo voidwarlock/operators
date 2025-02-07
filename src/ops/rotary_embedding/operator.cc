@@ -18,7 +18,7 @@
 #ifdef ENABLE_METAX_GPU
 #include "maca/rotary_embedding_maca.h"
 #endif
-#ifdef ENABLE_MT_GPU
+#ifdef ENABLE_MTHREADS_GPU
 #include "musa/rotary_embedding_musa.h"
 #endif
 
@@ -69,8 +69,8 @@ __C infiniopStatus_t infiniopCreateRoPEDescriptor(infiniopHandle_t handle,
                                             cos_table);
         }
 #endif
-#ifdef ENABLE_MT_GPU
-        case DevMtGpu: {
+#ifdef ENABLE_MTHREADS_GPU
+        case DevMthreadsGpu: {
             return musaCreateRoPEDescriptor((MusaHandle_t) handle, (RoPEMusaDescriptor_t *) desc_ptr, t, pos_ids, sin_table, cos_table);
         }
 #endif
@@ -107,8 +107,8 @@ __C infiniopStatus_t infiniopGetRoPEWorkspaceSize(infiniopRoPEDescriptor_t desc,
                                               size);
         }
 #endif
-#ifdef ENABLE_MT_GPU
-        case DevMtGpu: {
+#ifdef ENABLE_MTHREADS_GPU
+        case DevMthreadsGpu: {
             return musaGetRoPEWorkspaceSize((RoPEMusaDescriptor_t) desc, size);
         }
 #endif
@@ -164,8 +164,8 @@ __C infiniopStatus_t infiniopRoPE(infiniopRoPEDescriptor_t desc,
                               stream);
         }
 #endif
-#ifdef ENABLE_MT_GPU
-        case DevMtGpu: {
+#ifdef ENABLE_MTHREADS_GPU
+        case DevMthreadsGpu: {
             return musaRoPE((RoPEMusaDescriptor_t) desc, workspace, workspace_size, t, pos_ids, sin_table, cos_table, stream);
         }
 #endif
@@ -200,8 +200,8 @@ __C infiniopStatus_t infiniopDestroyRoPEDescriptor(infiniopRoPEDescriptor_t desc
             return macaDestroyRoPEDescriptor((RoPEMacaDescriptor_t) desc);
         }
 #endif
-#ifdef ENABLE_MT_GPU
-        case DevMtGpu: {
+#ifdef ENABLE_MTHREADS_GPU
+        case DevMthreadsGpu: {
             return musaDestroyRoPEDescriptor((RoPEMusaDescriptor_t) desc);
         }
 #endif

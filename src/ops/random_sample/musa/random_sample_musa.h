@@ -19,7 +19,7 @@ infiniopStatus_t musaCreateRandomSampleDescriptor(MusaHandle_t handle,
                                                   RandomSampleMusaDescriptor_t *desc_ptr, infiniopTensorDescriptor_t result,
                                                   infiniopTensorDescriptor_t probs);
 
-infiniopStatus_t musaGetRandomSampleWorkspaceSize(RandomSampleMusaDescriptor_t desc, unsigned long int *size);
+infiniopStatus_t musaGetRandomSampleWorkspaceSize(RandomSampleMusaDescriptor_t desc, uint64_t *size);
 
 infiniopStatus_t musaRandomSample(RandomSampleMusaDescriptor_t desc,
                                   void *workspace,

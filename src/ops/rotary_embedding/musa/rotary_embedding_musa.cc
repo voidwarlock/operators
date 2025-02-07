@@ -64,7 +64,7 @@ infiniopStatus_t musaCreateRoPEDescriptor(MusaHandle_t handle,
     return STATUS_SUCCESS;
 }
 
-infiniopStatus_t musaGetRoPEWorkspaceSize(RoPEMusaDescriptor_t desc, unsigned long int *size) {
+infiniopStatus_t musaGetRoPEWorkspaceSize(RoPEMusaDescriptor_t desc, uint64_t *size) {
     *size = 0;
     return STATUS_SUCCESS;
 }

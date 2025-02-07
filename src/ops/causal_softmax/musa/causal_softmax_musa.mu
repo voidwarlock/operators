@@ -219,12 +219,12 @@ __global__ void fused_softmax_standard(
 
 
 void causal_softmax_mt_gpu_f16(CausalSoftmaxMusaDescriptor_t desc, void* y, void *stream) {
-    unsigned long int total_seq_len = desc->total_seq_len;
-    unsigned long int seq_len = desc->seq_len;
-    unsigned long int batch_size = desc->batch_size;
-    unsigned long int stride_x = desc->stride_b;
-    unsigned long int stride_y = desc->stride_i;
-    unsigned long int stride_z = desc->stride_j;// covert byte strides to element strides
+    uint64_t total_seq_len = desc->total_seq_len;
+    uint64_t seq_len = desc->seq_len;
+    uint64_t batch_size = desc->batch_size;
+    uint64_t stride_x = desc->stride_b;
+    uint64_t stride_y = desc->stride_i;
+    uint64_t stride_z = desc->stride_j;// covert byte strides to element strides
     unsigned int max_items_per_thread = desc->max_items_per_thread;
 
     dim3 grid(batch_size, seq_len);

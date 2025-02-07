@@ -20,7 +20,7 @@
 #ifdef ENABLE_METAX_GPU
 #include "maca/rearrange_maca.h"
 #endif
-#ifdef ENABLE_MT_GPU
+#ifdef ENABLE_MTHREADS_GPU
 #include "musa/rearrange_musa.h"
 #endif
 
@@ -58,8 +58,8 @@ __C infiniopStatus_t infiniopCreateRearrangeDescriptor(
             return macaCreateRearrangeDescriptor((MacaHandle_t) handle, (RearrangeMacaDescriptor_t *) desc_ptr, dst, src);
         }
 #endif
-#ifdef ENABLE_MT_GPU
-        case DevMtGpu: {
+#ifdef ENABLE_MTHREADS_GPU
+        case DevMthreadsGpu: {
             return musaCreateRearrangeDescriptor((MusaHandle_t)handle, (RearrangeMusaDescriptor_t *) desc_ptr, dst, src);
         }
 #endif
@@ -97,8 +97,8 @@ __C infiniopStatus_t infiniopRearrange(infiniopRearrangeDescriptor_t desc, void 
             return macaRearrange((RearrangeMacaDescriptor_t) desc, dst, src, stream);
         }
 #endif
-#ifdef ENABLE_MT_GPU
-        case DevMtGpu: {
+#ifdef ENABLE_MTHREADS_GPU
+        case DevMthreadsGpu: {
             return musaRearrange((RearrangeMusaDescriptor_t) desc, dst, src, stream);
         }
 #endif
@@ -133,8 +133,8 @@ __C infiniopStatus_t infiniopDestroyRearrangeDescriptor(infiniopRearrangeDescrip
             return macaDestroyRearrangeDescriptor((RearrangeMacaDescriptor_t) desc);
         }
 #endif
-#ifdef ENABLE_MT_GPU
-        case DevMtGpu: {
+#ifdef ENABLE_MTHREADS_GPU
+        case DevMthreadsGpu: {
             return musaDestroyRearrangeDescriptor((RearrangeMusaDescriptor_t) desc);
         }
 #endif

@@ -8,10 +8,10 @@ struct RMSNormMusaDescriptor {
     Device device;
     int device_id;
     DT dtype;
-    unsigned long int n;
-    unsigned long int d;
-    unsigned long int stride_y;
-    unsigned long int stride_x;
+    uint64_t n;
+    uint64_t d;
+    uint64_t stride_y;
+    uint64_t stride_x;
     DT w_datatype;
     float epsilon;
 };
@@ -25,11 +25,11 @@ infiniopStatus_t musaCreateRMSNormDescriptor(MusaHandle_t handle,
                                              infiniopTensorDescriptor_t w_desc,
                                              float epsilon);
 
-infiniopStatus_t musaGetRMSNormWorkspaceSize(RMSNormMusaDescriptor_t desc, unsigned long int *size);
+infiniopStatus_t musaGetRMSNormWorkspaceSize(RMSNormMusaDescriptor_t desc, uint64_t *size);
 
 infiniopStatus_t musaRMSNorm(RMSNormMusaDescriptor_t desc,
                                    void *workspace,
-                                   unsigned long int workspace_size,
+                                   uint64_t workspace_size,
                                    void *y, void const *x, void const *w,
                                    void *stream);
 

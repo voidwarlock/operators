@@ -52,7 +52,7 @@ option("mthreads-gpu")
     set_default(false)
     set_showmenu(true)
     set_description("Enable or disable MThreads GPU kernel")
-    add_defines("ENABLE_MT_GPU")
+    add_defines("ENABLE_MTHREADS_GPU")
 option_end()
 
 option("sugon-dcu")
@@ -181,7 +181,7 @@ end
 
 if has_config("mthreads-gpu") then
 
-    add_defines("ENABLE_MT_GPU")
+    add_defines("ENABLE_MTHREADS_GPU")
     local musa_home = os.getenv("MUSA_INSTALL_PATH")
     -- Add include dirs
     add_includedirs(musa_home .. "/include")

@@ -54,7 +54,7 @@ infiniopStatus_t musaCreateAddDescriptor(MusaHandle_t handle,
     checkMusaErrorWithCode(musaMemcpy(c_strides_d, c->strides, ndim * sizeof(int64_t), musaMemcpyHostToDevice), STATUS_EXECUTION_FAILED);
 
     *desc_ptr = new AddMusaDescriptor{
-        DevMtGpu,
+        DevMthreadsGpu,
         c->dt,
         handle->device_id,
         ndim,

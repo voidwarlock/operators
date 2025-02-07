@@ -17,7 +17,7 @@
 #ifdef ENABLE_METAX_GPU
 #include "maca/random_sample_maca.h"
 #endif
-#ifdef ENABLE_MT_GPU
+#ifdef ENABLE_MTHREADS_GPU
 #include "musa/random_sample_musa.h"
 #endif
 
@@ -51,8 +51,8 @@ __C infiniopStatus_t infiniopCreateRandomSampleDescriptor(infiniopHandle_t handl
                                                     probs);
         }
 #endif
-#ifdef ENABLE_MT_GPU
-        case DevMtGpu:
+#ifdef ENABLE_MTHREADS_GPU
+        case DevMthreadsGpu:
             return musaCreateRandomSampleDescriptor((MusaHandle_t) handle, (RandomSampleMusaDescriptor_t *) desc_ptr, result, probs);
 #endif
     }
@@ -87,8 +87,8 @@ __C infiniopStatus_t infiniopGetRandomSampleWorkspaceSize(infiniopRandomSampleDe
             return macaGetRandomSampleWorkspaceSize((RandomSampleMacaDescriptor_t) desc, size);
         }
 #endif
-#ifdef ENABLE_MT_GPU
-        case DevMtGpu: {
+#ifdef ENABLE_MTHREADS_GPU
+        case DevMthreadsGpu: {
             return musaGetRandomSampleWorkspaceSize((RandomSampleMusaDescriptor_t) desc, size);
         }
 #endif
@@ -130,8 +130,8 @@ __C infiniopStatus_t infiniopRandomSample(infiniopRandomSampleDescriptor_t desc,
             return macaRandomSample((RandomSampleMacaDescriptor_t) desc, workspace, workspace_size, result, probs, random_val, topp, topk, temperature, stream);
         }
 #endif
-#ifdef ENABLE_MT_GPU
-        case DevMtGpu:
+#ifdef ENABLE_MTHREADS_GPU
+        case DevMthreadsGpu:
             return musaRandomSample((RandomSampleMusaDescriptor_t) desc, workspace, workspace_size, result, probs, random_val, topp, topk, temperature, stream);
 #endif
     }
@@ -163,8 +163,8 @@ __C infiniopStatus_t infiniopDestroyRandomSampleDescriptor(infiniopRandomSampleD
             return macaDestroyRandomSampleDescriptor((RandomSampleMacaDescriptor_t) desc);
         }
 #endif
-#ifdef ENABLE_MT_GPU
-        case DevMtGpu:
+#ifdef ENABLE_MTHREADS_GPU
+        case DevMthreadsGpu:
             return musaDestroyRandomSampleDescriptor((RandomSampleMusaDescriptor_t) desc);
 #endif
     }

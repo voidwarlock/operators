@@ -94,9 +94,8 @@ def test(lib, handle, torch_device, shape, strides=None, dtype=torch.float16):
     # 2x table length for test
     sin_table, cos_table = sin_cos_table(t.shape[0] * 2, t.shape[2], t.device, theta)
     t_tensor = to_tensor(t, lib)
-    pos_tensor = to_tensor(pos, lib)
-    if(torch_device == 'mlu' or torch_device == 'musa'):
-        pos_tensor.descriptor.contents.dt = U64
+    pos_tensor = to_tensor(pos[: t.shape[0]], lib)
+    pos_tensor.descriptor.contents.dt = U64
     sin_table_tensor = to_tensor(sin_table, lib)
     cos_table_tensor = to_tensor(cos_table, lib)
 
@@ -182,7 +181,7 @@ def test_maca(lib, test_cases) :
         test(lib, handle, "maca", shape, strides, dtype)
     destroy_handle(lib, handle)
 
-def test_musa(lib, test_cases):
+def test_musa(lib, test_cases) :
     import torch_musa
     device = DeviceEnum.DEVICE_MUSA
     handle = create_handle(lib, device)

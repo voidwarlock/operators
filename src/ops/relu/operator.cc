@@ -9,7 +9,7 @@
 #include "../../devices/cuda/cuda_handle.h"
 #include "cuda/relu.cuh"
 #endif
-#ifdef ENABLE_MT_GPU
+#ifdef ENABLE_MTHREADS_GPU
 #include "musa/relu_musa.h"
 #endif
 
@@ -33,8 +33,8 @@ __C infiniopStatus_t infiniopCreateReluDescriptor(
 #ifdef ENABLE_CAMBRICON_MLU
         // TODO
 #endif
-#ifdef ENABLE_MT_GPU
-        case DevMtGpu: {
+#ifdef ENABLE_MTHREADS_GPU
+        case DevMthreadsGpu: {
             return musaCreateReluDescriptor((MusaHandle_t) handle, (ReluMusaDescriptor_t *) desc_ptr, y, x);
         }
 #endif
@@ -57,8 +57,8 @@ __C infiniopStatus_t infiniopRelu(infiniopReluDescriptor_t desc, void *y, void c
 #ifdef ENABLE_CAMBRICON_MLU
         // TODO
 #endif
-#ifdef ENABLE_MT_GPU
-        case DevMtGpu: {
+#ifdef ENABLE_MTHREADS_GPU
+        case DevMthreadsGpu: {
             return musaRelu((ReluMusaDescriptor_t) desc, y, x, stream);
         }
 #endif
@@ -81,8 +81,8 @@ __C infiniopStatus_t infiniopDestroyReluDescriptor(infiniopReluDescriptor_t desc
 #ifdef ENABLE_CAMBRICON_MLU
         // TODO
 #endif
-#ifdef ENABLE_MT_GPU
-        case DevMtGpu: {
+#ifdef ENABLE_MTHREADS_GPU
+        case DevMthreadsGpu: {
             return musaDestroyReluDescriptor((ReluMusaDescriptor_t) desc);
         }
 #endif

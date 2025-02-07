@@ -34,7 +34,7 @@ infiniopStatus_t musaCreateSwiGLUDescriptor(infiniopHandle_t handle,
         return STATUS_BAD_PARAM;
     }
 
-    *desc_ptr = new SwiGLUMusaDescriptor{DevMtGpu,
+    *desc_ptr = new SwiGLUMusaDescriptor{DevMthreadsGpu,
                                          dtype,
                                          seq_len,
                                          di,

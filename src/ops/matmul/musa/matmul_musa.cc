@@ -26,7 +26,7 @@ infiniopStatus_t musaCreateMatmulDescriptor(MusaHandle_t handle,
     }
 
     *desc_ptr = new MatmulMusaDescriptor{
-        DevMtGpu,
+        DevMthreadsGpu,
         dtype,
         handle->device_id,
         info,

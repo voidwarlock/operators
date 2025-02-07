@@ -37,7 +37,7 @@ infiniopStatus_t createMusaHandle(MusaHandle_t* handle_ptr, int device_id) {
     musaDeviceGetAttribute(&capability_minor, musaDevAttrComputeCapabilityMinor, device_id);
 
     *handle_ptr = new MusaContext{
-        DevMtGpu,
+        DevMthreadsGpu,
         device_id,
         std::move(mublas_pool),
         std::move(mudnn_pool),

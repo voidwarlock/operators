@@ -14,7 +14,7 @@
 #ifdef ENABLE_METAX_GPU
 #include "./maca/maca_handle.h"
 #endif
-#ifdef ENABLE_MT_GPU
+#ifdef ENABLE_MTHREADS_GPU
 #include "./musa/musa_handle.h"
 #endif
 
@@ -52,8 +52,8 @@ __C infiniopStatus_t infiniopCreateHandle(infiniopHandle_t *handle_ptr, Device d
             return createMacaHandle((MacaHandle_t *) handle_ptr, device_id);
         }
 #endif
-#ifdef ENABLE_MT_GPU
-        case DevMtGpu: {
+#ifdef ENABLE_MTHREADS_GPU
+        case DevMthreadsGpu: {
             return createMusaHandle((MusaHandle_t *) handle_ptr, device_id);
         }
 #endif
@@ -90,8 +90,8 @@ __C infiniopStatus_t infiniopDestroyHandle(infiniopHandle_t handle) {
             return deleteMacaHandle((MacaHandle_t) handle);
         }
 #endif
-#ifdef ENABLE_MT_GPU
-        case DevMtGpu: {
+#ifdef ENABLE_MTHREADS_GPU
+        case DevMthreadsGpu: {
             deleteMusaHandle((MusaHandle_t) handle);
             return STATUS_SUCCESS;
         }

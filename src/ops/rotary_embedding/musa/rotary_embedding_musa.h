@@ -24,11 +24,11 @@ infiniopStatus_t musaCreateRoPEDescriptor(MusaHandle_t handle,
                                           infiniopTensorDescriptor_t sin_table,
                                           infiniopTensorDescriptor_t cos_table);
 
-infiniopStatus_t musaGetRoPEWorkspaceSize(RoPEMusaDescriptor_t desc, unsigned long int *size);
+infiniopStatus_t musaGetRoPEWorkspaceSize(RoPEMusaDescriptor_t desc, uint64_t *size);
 
 infiniopStatus_t musaRoPE(RoPEMusaDescriptor_t desc,
                           void *workspace,
-                          unsigned long int workspace_size,
+                          uint64_t workspace_size,
                           void *t,
                           void const *pos_ids,
                           void const *sin_table,

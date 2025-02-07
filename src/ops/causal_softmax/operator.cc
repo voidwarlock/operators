@@ -21,7 +21,7 @@
 #ifdef ENABLE_METAX_GPU
 #include "maca/causal_softmax_maca.h"
 #endif
-#ifdef ENABLE_MT_GPU
+#ifdef ENABLE_MTHREADS_GPU
 #include "musa/causal_softmax_musa.h"
 #include "../../devices/musa/common_musa.h"
 #endif
@@ -57,8 +57,8 @@ __C infiniopStatus_t infiniopCreateCausalSoftmaxDescriptor(
             return macaCreateCausalSoftmaxDescriptor((MacaHandle_t) handle, (CausalSoftmaxMacaDescriptor_t *) desc_ptr, y_desc);
         }
 #endif
-#ifdef ENABLE_MT_GPU
-        case DevMtGpu: {
+#ifdef ENABLE_MTHREADS_GPU
+        case DevMthreadsGpu: {
             return musaCreateCausalSoftmaxDescriptor((MusaHandle_t) handle, (CausalSoftmaxMusaDescriptor_t *) desc_ptr, y_desc);
         }
 #endif
@@ -95,8 +95,8 @@ __C infiniopStatus_t infiniopGetCausalSoftmaxWorkspaceSize(infiniopCausalSoftmax
             return macaGetCausalSoftmaxWorkspaceSize((CausalSoftmaxMacaDescriptor_t) desc, size);
         }
 #endif
-#ifdef ENABLE_MT_GPU
-        case DevMtGpu: {
+#ifdef ENABLE_MTHREADS_GPU
+        case DevMthreadsGpu: {
             return musaGetCausalSoftmaxWorkspaceSize((CausalSoftmaxMusaDescriptor_t) desc, size);
         }
 #endif
@@ -132,8 +132,8 @@ __C infiniopStatus_t infiniopCausalSoftmax(infiniopCausalSoftmaxDescriptor_t des
             return macaCausalSoftmax((CausalSoftmaxMacaDescriptor_t) desc, workspace, workspace_size, data, stream);
         }
 #endif
-#ifdef ENABLE_MT_GPU
-        case DevMtGpu: {
+#ifdef ENABLE_MTHREADS_GPU
+        case DevMthreadsGpu: {
             return musaCausalSoftmax((CausalSoftmaxMusaDescriptor_t) desc, workspace, workspace_size, data, stream);
         }
 #endif
@@ -169,8 +169,8 @@ __C infiniopStatus_t infiniopDestroyCausalSoftmaxDescriptor(infiniopCausalSoftma
             return macaDestroyCausalSoftmaxDescriptor((CausalSoftmaxMacaDescriptor_t) desc);
         }
 #endif
-#ifdef ENABLE_MT_GPU
-        case DevMtGpu:
+#ifdef ENABLE_MTHREADS_GPU
+        case DevMthreadsGpu:
             return musaDestroyCausalSoftmaxDescriptor((CausalSoftmaxMusaDescriptor_t) desc);
 #endif
     }
