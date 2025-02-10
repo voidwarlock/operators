@@ -17,6 +17,9 @@
 #ifdef ENABLE_ASCEND_NPU
 #include "ascend/rearrange_aclnn.h"
 #endif
+#ifdef ENABLE_METAX_GPU
+#include "maca/rearrange_maca.h"
+#endif
 
 __C infiniopStatus_t infiniopCreateRearrangeDescriptor(
     infiniopHandle_t handle,
@@ -45,6 +48,11 @@ __C infiniopStatus_t infiniopCreateRearrangeDescriptor(
                                                   (RearrangeAclnnDescriptor_t *) desc_ptr,
                                                   dst,
                                                   src);
+        }
+#endif
+#ifdef ENABLE_METAX_GPU
+        case DevMetaxGpu: {
+            return macaCreateRearrangeDescriptor((MacaHandle_t) handle, (RearrangeMacaDescriptor_t *) desc_ptr, dst, src);
         }
 #endif
     }
@@ -76,6 +84,11 @@ __C infiniopStatus_t infiniopRearrange(infiniopRearrangeDescriptor_t desc, void 
                                   stream);
         }
 #endif
+#ifdef ENABLE_METAX_GPU
+        case DevMetaxGpu: {
+            return macaRearrange((RearrangeMacaDescriptor_t) desc, dst, src, stream);
+        }
+#endif
     }
     return STATUS_BAD_DEVICE;
 }
@@ -100,6 +113,11 @@ __C infiniopStatus_t infiniopDestroyRearrangeDescriptor(infiniopRearrangeDescrip
 #ifdef ENABLE_ASCEND_NPU
         case DevAscendNpu: {
             return aclnnDestroyRearrangeDescriptor((RearrangeAclnnDescriptor_t) desc);
+        }
+#endif
+#ifdef ENABLE_METAX_GPU
+        case DevMetaxGpu: {
+            return macaDestroyRearrangeDescriptor((RearrangeMacaDescriptor_t) desc);
         }
 #endif
     }

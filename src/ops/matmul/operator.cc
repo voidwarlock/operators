@@ -14,6 +14,9 @@
 #ifdef ENABLE_ASCEND_NPU
 #include "ascend/matmul_aclnn.h"
 #endif
+#ifdef ENABLE_METAX_GPU
+#include "maca/matmul_maca.h"
+#endif
 
 __C infiniopStatus_t infiniopCreateMatmulDescriptor(infiniopHandle_t handle,
                                                     infiniopMatmulDescriptor_t *desc_ptr,
@@ -49,6 +52,11 @@ __C infiniopStatus_t infiniopCreateMatmulDescriptor(infiniopHandle_t handle,
                                                1);
         }
 #endif
+#ifdef ENABLE_METAX_GPU
+        case DevMetaxGpu: {
+            return macaCreateMatmulDescriptor((MacaHandle_t) handle, (MatmulMacaDescriptor_t *) desc_ptr, c_desc, alpha, a_desc, b_desc, beta);
+        }
+#endif
     }
     return STATUS_BAD_DEVICE;
 }
@@ -74,6 +82,11 @@ __C infiniopStatus_t infiniopGetMatmulWorkspaceSize(infiniopMatmulDescriptor_t d
         case DevAscendNpu: {
             return aclnnGetMatmulWorkspaceSize((MatmulAclnnDescriptor_t) desc,
                                                size);
+        }
+#endif
+#ifdef ENABLE_METAX_GPU
+        case DevMetaxGpu: {
+            return macaGetMatmulWorkspaceSize((MatmulMacaDescriptor_t) desc, size);
         }
 #endif
     }
@@ -105,6 +118,11 @@ __C infiniopStatus_t infiniopMatmul(infiniopMatmulDescriptor_t desc, void *works
                                b,
                                stream);
 #endif
+#ifdef ENABLE_METAX_GPU
+        case DevMetaxGpu: {
+            return macaMatmul((MatmulMacaDescriptor_t) desc, workspace, workspace_size, c, a, b, stream);
+        }
+#endif
     }
     return STATUS_BAD_DEVICE;
 }
@@ -129,6 +147,11 @@ __C infiniopStatus_t infiniopDestroyMatmulDescriptor(infiniopMatmulDescriptor_t 
 #ifdef ENABLE_ASCEND_NPU
         case DevAscendNpu: {
             return aclnnDestroyMatmulDescriptor((MatmulAclnnDescriptor_t) desc);
+        }
+#endif
+#ifdef ENABLE_METAX_GPU
+        case DevMetaxGpu: {
+            return macaDestroyMatmulDescriptor((MatmulMacaDescriptor_t) desc);
         }
 #endif
     }

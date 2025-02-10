@@ -14,6 +14,9 @@
 #ifdef ENABLE_ASCEND_NPU
 #include "ascend/swiglu.h"
 #endif
+#ifdef ENABLE_METAX_GPU
+#include "maca/swiglu_maca.h"
+#endif
 
 __C infiniopStatus_t infiniopCreateSwiGLUDescriptor(infiniopHandle_t handle,
                                                     infiniopSwiGLUDescriptor_t *desc_ptr,
@@ -46,6 +49,15 @@ __C infiniopStatus_t infiniopCreateSwiGLUDescriptor(infiniopHandle_t handle,
                                                 a_desc,
                                                 b_desc);
 #endif
+#ifdef ENABLE_METAX_GPU
+        case DevMetaxGpu: {
+            return macaCreateSwiGLUDescriptor((MacaHandle_t) handle,
+                                                (SwiGLUMacaDescriptor_t *) desc_ptr,
+                                                c_desc,
+                                                a_desc,
+                                                b_desc);
+        }
+#endif
     }
     return STATUS_BAD_DEVICE;
 };
@@ -73,6 +85,10 @@ __C infiniopStatus_t infiniopSwiGLU(infiniopSwiGLUDescriptor_t desc,
         case DevAscendNpu:
             return ascendSwiGLU((SwiGLUAscendDescriptor_t) desc, c, a, b, stream);
 #endif
+#ifdef ENABLE_METAX_GPU
+        case DevMetaxGpu:
+            return macaSwiGLU((SwiGLUMacaDescriptor_t) desc, c, a, b, stream);
+#endif
     }
     return STATUS_BAD_DEVICE;
 }
@@ -95,6 +111,10 @@ __C infiniopStatus_t infiniopDestroySwiGLUDescriptor(infiniopSwiGLUDescriptor_t 
 #ifdef ENABLE_ASCEND_NPU
         case DevAscendNpu:
             return ascendDestroySwiGLUDescriptor((SwiGLUAscendDescriptor_t) desc);
+#endif
+#ifdef ENABLE_METAX_GPU
+        case DevMetaxGpu:
+            return macaDestroySwiGLUDescriptor((SwiGLUMacaDescriptor_t) desc);
 #endif
     }
     return STATUS_BAD_DEVICE;

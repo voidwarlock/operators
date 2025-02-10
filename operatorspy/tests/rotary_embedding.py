@@ -45,7 +45,6 @@ def rotary_embedding(t, pos, theta, torch_device):
     )
     freqs = torch.outer(pos, freqs)
     freqs_cis = torch.polar(torch.ones_like(freqs), freqs)
-    
     t_ = torch.view_as_complex(t.reshape(*t.shape[:-1], -1, 2))
     freqs_cis = reshape_for_broadcast(freqs_cis, t_)
     t_out = torch.view_as_real(t_ * freqs_cis).flatten(2).to(t.dtype)
@@ -82,6 +81,10 @@ def test(lib, handle, torch_device, shape, strides=None, dtype=torch.float16):
         ans = rotary_embedding(t, posTmp, theta, "cpu").to(torch_device)
         pos = pos.to(torch_device)
         t = t.to(torch_device)
+    elif torch_device == 'maca':
+        ans = rotary_embedding(t, posTmp, theta, "cpu").to('cuda')
+        pos = pos.to('cuda')
+        t = t.to('cuda')
     else:
         t = t.to(torch_device)
         pos = pos.to(torch_device)
@@ -133,7 +136,6 @@ def test(lib, handle, torch_device, shape, strides=None, dtype=torch.float16):
             None,
         )
     )
-
     assert torch.allclose(t, ans, atol=1e-4, rtol=1e-2)
     check_error(lib.infiniopDestroyRoPEDescriptor(descriptor))
 
@@ -170,6 +172,13 @@ def test_ascend(lib, test_cases) :
     handle = create_handle(lib, device)
     for shape, strides, dtype in test_cases:
         test(lib, handle, "npu", shape, strides, dtype)
+    destroy_handle(lib, handle)
+
+def test_maca(lib, test_cases) :
+    device = DeviceEnum.DEVICE_MACA
+    handle = create_handle(lib, device)
+    for shape, strides, dtype in test_cases:
+        test(lib, handle, "maca", shape, strides, dtype)
     destroy_handle(lib, handle)
 
 if __name__ == "__main__":
@@ -222,6 +231,8 @@ if __name__ == "__main__":
         test_bang(lib, test_cases)
     if args.ascend:
         test_ascend(lib, test_cases)
-    if not (args.cpu or args.cuda or args.bang or args.ascend):
+    if args.maca:
+        test_maca(lib, test_cases)
+    if not (args.cpu or args.cuda or args.bang or args.ascend or args.maca):
         test_cpu(lib, test_cases)
     print("\033[92mTest passed!\033[0m")
