@@ -20,6 +20,9 @@
 #ifdef ENABLE_METAX_GPU
 #include "maca/rms_norm_maca.h"
 #endif
+#ifdef ENABLE_MTHREADS_GPU
+#include "musa/rms_norm_musa.h"
+#endif
 
 __C infiniopStatus_t infiniopCreateRMSNormDescriptor(
     infiniopHandle_t handle,
@@ -58,6 +61,11 @@ __C infiniopStatus_t infiniopCreateRMSNormDescriptor(
             return macaCreateRMSNormDescriptor((MacaHandle_t) handle, (RMSNormMacaDescriptor_t *) desc_ptr, y_desc, x_desc, w_desc, epsilon);
         }
 #endif
+#ifdef ENABLE_MTHREADS_GPU
+        case DevMthreadsGpu: {
+            return musaCreateRMSNormDescriptor((MusaHandle_t) handle, (RMSNormMusaDescriptor_t *) desc_ptr, y_desc, x_desc, w_desc, epsilon);
+        }
+#endif
     }
     return STATUS_BAD_DEVICE;
 }
@@ -88,6 +96,11 @@ __C infiniopStatus_t infiniopGetRMSNormWorkspaceSize(infiniopRMSNormDescriptor_t
 #ifdef ENABLE_METAX_GPU
         case DevMetaxGpu: {
             return macaGetRMSNormWorkspaceSize((RMSNormMacaDescriptor_t) desc, size);
+        }
+#endif
+#ifdef ENABLE_MTHREADS_GPU
+        case DevMthreadsGpu: {
+            return musaGetRMSNormWorkspaceSize((RMSNormMusaDescriptor_t) desc, size);
         }
 #endif
     }
@@ -128,6 +141,11 @@ __C infiniopStatus_t infiniopRMSNorm(infiniopRMSNormDescriptor_t desc, void *wor
             return macaRMSNorm((RMSNormMacaDescriptor_t) desc, workspace, workspace_size, y, x, w, stream);
         }
 #endif
+#ifdef ENABLE_MTHREADS_GPU
+        case DevMthreadsGpu: {
+            return musaRMSNorm((RMSNormMusaDescriptor_t) desc, workspace, workspace_size, y, x, w, stream);
+        }
+#endif
     }
     return STATUS_BAD_DEVICE;
 }
@@ -153,11 +171,15 @@ __C infiniopStatus_t infiniopDestroyRMSNormDescriptor(infiniopRMSNormDescriptor_
         case DevAscendNpu: {
             return aclnnDestroyRMSNormDescriptor((RMSNormAclnnDescriptor_t) desc);
         }
-
 #endif
 #ifdef ENABLE_METAX_GPU
         case DevMetaxGpu: {
             return macaDestroyRMSNormDescriptor((RMSNormMacaDescriptor_t) desc);
+        }
+#endif
+#ifdef ENABLE_MTHREADS_GPU
+        case DevMthreadsGpu: {
+            return musaDestroyRMSNormDescriptor((RMSNormMusaDescriptor_t) desc);
         }
 #endif
     }

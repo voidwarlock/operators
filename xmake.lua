@@ -48,6 +48,13 @@ option("metax-gpu")
 option_end()
 
 
+option("mthreads-gpu")
+    set_default(false)
+    set_showmenu(true)
+    set_description("Enable or disable MThreads GPU kernel")
+    add_defines("ENABLE_MTHREADS_GPU")
+option_end()
+
 option("sugon-dcu")
     set_default(false)
     set_showmenu(true)
@@ -168,6 +175,51 @@ if has_config("cambricon-mlu") then
         add_files("src/devices/bang/*.cc", "src/ops/*/bang/*.cc")
         add_files("src/ops/*/bang/*.mlu", {rule = "mlu"})
         add_cxflags("-lstdc++ -Wall -Werror -fPIC")
+    target_end()
+
+end
+
+if has_config("mthreads-gpu") then
+
+    add_defines("ENABLE_MTHREADS_GPU")
+    local musa_home = os.getenv("MUSA_INSTALL_PATH")
+    -- Add include dirs
+    add_includedirs(musa_home .. "/include")
+    -- Add shared lib
+    add_linkdirs(musa_home .. "/lib")
+    add_links("libmusa.so")
+    add_links("libmusart.so")
+    add_links("libmudnn.so")
+    add_links("libmublas.so")
+
+    rule("mu")
+        set_extensions(".mu")
+        on_load(function (target)
+            target:add("includedirs", "include")
+        end)
+
+        on_build_file(function (target, sourcefile)
+            local objectfile = target:objectfile(sourcefile)
+            os.mkdir(path.directory(objectfile))
+
+            local mcc = "/usr/local/musa/bin/mcc"
+            local includedirs = table.concat(target:get("includedirs"), " ")
+            local args = {"-c", sourcefile, "-o", objectfile, "-I/usr/local/musa/include", "-O3", "-fPIC", "-Wall", "-std=c++17", "-pthread"}
+            for _, includedir in ipairs(target:get("includedirs")) do
+                table.insert(args, "-I" .. includedir)
+            end
+
+            os.execv(mcc, args)
+            table.insert(target:objectfiles(), objectfile)
+        end)
+    rule_end()
+
+    target("mthreads-gpu")
+        set_kind("static")
+        set_languages("cxx17")
+        add_files("src/devices/musa/*.cc", "src/ops/*/musa/*.cc")
+        add_files("src/ops/*/musa/*.mu", {rule = "mu"})
+        add_cxflags("-lstdc++ -Wall -fPIC")
     target_end()
 
 end
@@ -314,6 +366,9 @@ target("infiniop")
     end
     if has_config("metax-gpu") then
         add_deps("metax-gpu")
+    end
+    if has_config("mthreads-gpu") then
+        add_deps("mthreads-gpu")
     end
     set_languages("cxx17")
     add_files("src/devices/handle.cc")

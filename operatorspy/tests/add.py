@@ -115,6 +115,16 @@ def test_bang(lib, test_cases):
         test(lib, handle, "mlu", c_shape, a_shape, b_shape, tensor_dtype=torch.float32, inplace=inplace)
     destroy_handle(lib, handle)
 
+def test_musa(lib, test_cases):
+    import torch_musa
+
+    device = DeviceEnum.DEVICE_MUSA
+    handle = create_handle(lib, device)
+    for c_shape, a_shape, b_shape, inplace in test_cases:
+        test(lib, handle, "musa", c_shape, a_shape, b_shape, tensor_dtype=torch.float16, inplace=inplace)
+        test(lib, handle, "musa", c_shape, a_shape, b_shape, tensor_dtype=torch.float32, inplace=inplace)
+    destroy_handle(lib, handle)
+
 
 if __name__ == "__main__":
     test_cases = [
@@ -163,6 +173,8 @@ if __name__ == "__main__":
         test_cuda(lib, test_cases)
     if args.bang:
         test_bang(lib, test_cases)
-    if not (args.cpu or args.cuda or args.bang):
+    if args.musa:
+        test_musa(lib, test_cases)
+    if not (args.cpu or args.cuda or args.bang or args.musa):
         test_cpu(lib, test_cases)
     print("\033[92mTest passed!\033[0m")

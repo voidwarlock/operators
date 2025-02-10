@@ -17,6 +17,9 @@
 #ifdef ENABLE_METAX_GPU
 #include "maca/matmul_maca.h"
 #endif
+#ifdef ENABLE_MTHREADS_GPU
+#include "musa/matmul_musa.h"
+#endif
 
 __C infiniopStatus_t infiniopCreateMatmulDescriptor(infiniopHandle_t handle,
                                                     infiniopMatmulDescriptor_t *desc_ptr,
@@ -57,6 +60,11 @@ __C infiniopStatus_t infiniopCreateMatmulDescriptor(infiniopHandle_t handle,
             return macaCreateMatmulDescriptor((MacaHandle_t) handle, (MatmulMacaDescriptor_t *) desc_ptr, c_desc, alpha, a_desc, b_desc, beta);
         }
 #endif
+#ifdef ENABLE_MTHREADS_GPU
+        case DevMthreadsGpu: {
+            return musaCreateMatmulDescriptor((MusaHandle_t) handle, (MatmulMusaDescriptor_t *) desc_ptr, c_desc, alpha, a_desc, b_desc, beta);   
+        }
+#endif
     }
     return STATUS_BAD_DEVICE;
 }
@@ -87,6 +95,11 @@ __C infiniopStatus_t infiniopGetMatmulWorkspaceSize(infiniopMatmulDescriptor_t d
 #ifdef ENABLE_METAX_GPU
         case DevMetaxGpu: {
             return macaGetMatmulWorkspaceSize((MatmulMacaDescriptor_t) desc, size);
+        }
+#endif
+#ifdef ENABLE_MTHREADS_GPU
+        case DevMthreadsGpu: {
+            return musaGetMatmulWorkspaceSize((MatmulMusaDescriptor_t) desc, size);
         }
 #endif
     }
@@ -123,6 +136,11 @@ __C infiniopStatus_t infiniopMatmul(infiniopMatmulDescriptor_t desc, void *works
             return macaMatmul((MatmulMacaDescriptor_t) desc, workspace, workspace_size, c, a, b, stream);
         }
 #endif
+#ifdef ENABLE_MTHREADS_GPU
+        case DevMthreadsGpu: {
+            return musaMatmul((MatmulMusaDescriptor_t) desc, workspace, workspace_size, c, a, b, stream);
+        }
+#endif
     }
     return STATUS_BAD_DEVICE;
 }
@@ -152,6 +170,11 @@ __C infiniopStatus_t infiniopDestroyMatmulDescriptor(infiniopMatmulDescriptor_t 
 #ifdef ENABLE_METAX_GPU
         case DevMetaxGpu: {
             return macaDestroyMatmulDescriptor((MatmulMacaDescriptor_t) desc);
+        }
+#endif
+#ifdef ENABLE_MTHREADS_GPU
+        case DevMthreadsGpu: {
+            return musaDestroyMatmulDescriptor((MatmulMusaDescriptor_t) desc);
         }
 #endif
     }
