@@ -13,32 +13,12 @@ infiniopStatus_t matmul_cuda(MatmulCudaDescriptor_t desc, void *c, float beta, v
         std::swap(a, b);
     }
 
-    
-    
-#ifdef ENABLE_SUGON_DCU
-    float alpha_, beta_;
-#else
-    Tdata alpha_, beta_;
-#endif
     cudaDataType a_type, b_type, c_type;
     cublasComputeType_t compute_type;
     if constexpr (std::is_same<Tdata, half>::value) {
-#ifdef ENABLE_SUGON_DCU
-        alpha_ = alpha;
-        beta_ = beta;
-#else
-        alpha_ = __float2half(alpha);
-        beta_ = __float2half(beta);
-#endif
         a_type = b_type = c_type = CUDA_R_16F;
-#ifdef ENABLE_SUGON_DCU
         compute_type = CUBLAS_COMPUTE_32F;
-#else
-        compute_type = CUBLAS_COMPUTE_16F;
-#endif
     } else {
-        alpha_ = alpha;
-        beta_ = beta;
         a_type = b_type = c_type = CUDA_R_32F;
 #ifdef ENABLE_SUGON_DCU
         compute_type = CUBLAS_COMPUTE_32F;
@@ -58,7 +38,7 @@ infiniopStatus_t matmul_cuda(MatmulCudaDescriptor_t desc, void *c, float beta, v
                                                 info.m,
                                                 info.n,
                                                 info.k,
-                                                &alpha_,
+                                                &alpha,
                                                 a,
                                                 a_type,
                                                 info.a_matrix.ld(),
@@ -67,7 +47,7 @@ infiniopStatus_t matmul_cuda(MatmulCudaDescriptor_t desc, void *c, float beta, v
                                                 b_type,
                                                 info.b_matrix.ld(),
                                                 info.b_matrix.stride,
-                                                &beta_,
+                                                &beta,
                                                 c,
                                                 c_type,
                                                 info.c_matrix.ld(),
