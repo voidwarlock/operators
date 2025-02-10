@@ -5,7 +5,7 @@
 #include <cub/cub.cuh>
 
 template<class T, int BLOCK_DIM>
-__global__ void softmax(
+__launch_bounds__(MAX_THREADS_PER_BLOCK) __global__ void softmax(
     T *val_out,
     int topk,
     float temperature, int voc) {
@@ -29,14 +29,14 @@ __global__ void softmax(
     }
 }
 
-__global__ void index(uint64_t *key_in, int voc) {
+__launch_bounds__(MAX_THREADS_PER_BLOCK) __global__ void index(uint64_t *key_in, int voc) {
     int ind = threadIdx.x + blockIdx.x * blockDim.x;
     if (ind < voc) {
         key_in[ind] = static_cast<uint64_t>(ind);
     }
 }
 template<class T>
-__global__ void random_sample_kernel(uint64_t *result,
+__launch_bounds__(MAX_THREADS_PER_BLOCK) __global__ void random_sample_kernel(uint64_t *result,
                                      T *val_out,
                                      float random_val,
                                      float topp,
@@ -119,7 +119,9 @@ void random_sample_nv_gpu_f16(RandomSampleCudaDescriptor_t desc, void *workspace
     uint64_t *key_in = (uint64_t *) keyTmp;
     uint64_t *key_out = key_in + voc;
 
-    index<<<(voc + 1023) / 1024, 1024, 0, (cudaStream_t) stream>>>(key_in, voc);
+    int block_dim = MAX_THREADS_PER_BLOCK;
+    int num_blocks = ROUND_UP_DIV(voc, block_dim);
+    index<<<num_blocks, block_dim, 0, (cudaStream_t) stream>>>(key_in, voc);
     //下面开始计算workspace空间
     size_t size_radix_sort;
     size_t size_scan;
@@ -134,9 +136,7 @@ void random_sample_nv_gpu_f16(RandomSampleCudaDescriptor_t desc, void *workspace
         voc, (cudaStream_t) stream);//该函数会把排序结果和对应索引保存在val_out和key_out上
     //排序结束，然后开始做softmax变换
     if (topp > 0 && topk > 1) {
-        int BLOCK_DIM = 1024;
-        int num_blocks = (voc + BLOCK_DIM - 1) / BLOCK_DIM;
-        softmax<half, 1024><<<num_blocks, BLOCK_DIM, 0, (cudaStream_t) stream>>>(val_out, topk,
+        softmax<half, MAX_THREADS_PER_BLOCK><<<num_blocks, block_dim, 0, (cudaStream_t) stream>>>(val_out, topk,
                                                                                  temperature, voc);
 
 

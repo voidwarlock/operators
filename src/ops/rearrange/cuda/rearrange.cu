@@ -1,8 +1,9 @@
 #include "../../../devices/cuda/common_cuda.h"
 #include "rearrange.cuh"
+#include "../../utils.h"
 
 template<class Tmem>
-static __global__ void rearrange(
+static __launch_bounds__(MAX_THREADS_PER_BLOCK) __global__ void rearrange(
     void *__restrict__ dst,
     int const rsa,
     int const csa,
@@ -35,9 +36,9 @@ void rearrange_nv_gpu(RearrangeCudaDescriptor_t desc, void *y, void const *x, vo
         return;
     }
 
-    auto warps = 1024 / WARP_SIZE;
-    auto grid = dim3((c + warps - 1) / warps, r);
-    auto block = dim3(WARP_SIZE, (c + grid.x - 1) / grid.x);
+    auto warps = MAX_THREADS_PER_BLOCK / WARP_SIZE;
+    auto grid = dim3(ROUND_UP_DIV(c, warps), r);
+    auto block = dim3(WARP_SIZE, ROUND_UP_DIV(c, grid.x));
     dst_rs /= unit;
     dst_cs /= unit;
     src_rs /= unit;

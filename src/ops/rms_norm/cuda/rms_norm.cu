@@ -6,7 +6,7 @@
 
 // assert BLOCK_SIZE >= blockDim.x
 template<unsigned int BLOCK_SIZE, class Tdata, class Wdata>
-static __global__ void rms_norm_padding(
+__launch_bounds__(MAX_THREADS_PER_BLOCK) static __global__ void rms_norm_padding(
     Tdata *__restrict__ o_,
     unsigned int const stride_y,
     Tdata const *__restrict__ x_,
@@ -19,8 +19,11 @@ static __global__ void rms_norm_padding(
 
     using BlockOp = cub::BlockReduce<float, BLOCK_SIZE>;
     __shared__ typename BlockOp::TempStorage temp_storage;
+#ifdef ENABLE_SUGON_DCU
+    auto acc = BlockOp(temp_storage).Sum(x * x);
+#else
     auto acc = BlockOp(temp_storage).Reduce(x * x, cub::Sum());
-
+#endif
     __shared__ Tdata rms;
     if (threadIdx.x == 0) {
         rms = Tdata(rsqrtf(acc / float(blockDim.x) + epsilon));
@@ -31,7 +34,7 @@ static __global__ void rms_norm_padding(
 }
 
 template<unsigned int BLOCK_SIZE, unsigned int ITEMS_PER_THREAD, class Tdata, class Wdata>
-static __global__ void rms_norm_folding(
+__launch_bounds__(MAX_THREADS_PER_BLOCK) static __global__ void rms_norm_folding(
     Tdata *__restrict__ y,
     unsigned int const stride_y,
     Tdata const *__restrict__ x,
@@ -59,7 +62,11 @@ static __global__ void rms_norm_folding(
     {
         using BlockOp = cub::BlockReduce<float, BLOCK_SIZE>;
         __shared__ typename BlockOp::TempStorage temp_storage;
+#ifdef ENABLE_SUGON_DCU
+        acc = BlockOp(temp_storage).Sum(squared);
+#else
         acc = BlockOp(temp_storage).Reduce(squared, cub::Sum());
+#endif
     }
 
     __shared__ Tdata rms;

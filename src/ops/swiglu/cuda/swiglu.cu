@@ -17,7 +17,7 @@ inline int gcd(int a, int b) {
 }
 
 template<class Tdata>
-static __global__ void swiglu(
+static __launch_bounds__(MAX_THREADS_PER_BLOCK) __global__ void swiglu(
     Tdata *__restrict__ c,
     int const stride_c,
     Tdata const *__restrict__ a,
