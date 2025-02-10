@@ -27,3 +27,4 @@ infiniopStatus_t musaDestroyRearrangeDescriptor(RearrangeMusaDescriptor_t desc);
 
 void rearrange_mt_gpu(RearrangeMusaDescriptor *, void *y, void const *x, void *stream);
 #endif // __MUSA_REARRANGE_H__
+

@@ -94,7 +94,7 @@ def test(lib, handle, torch_device, voc, random_val, topp, topk, temperature, x_
     if(torch_device == 'maca'):
         indices = torch.zeros([1], dtype = torch.int64).to('cuda')
     else:
-        indices = torch.zeros([1], dtype = torch.uint64).to(torch_device)
+        indices = torch.zeros([1], dtype = torch.int64).to(torch_device)
     x_tensor = to_tensor(data, lib)
     indices_tensor = to_tensor(indices, lib)
     indices_tensor.descriptor.contents.dt = U64  # treat int64 as uint64

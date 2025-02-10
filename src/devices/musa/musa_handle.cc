@@ -16,7 +16,7 @@ infiniopStatus_t createMusaHandle(MusaHandle_t* handle_ptr, int device_id) {
         return STATUS_BAD_DEVICE;
     }
 
-    // set CUDA device property
+    // set MUSA device property
     musaDeviceProp prop;
     musaGetDeviceProperties(&prop, device_id);
 

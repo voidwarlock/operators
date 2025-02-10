@@ -32,5 +32,4 @@ infiniopStatus_t musaCausalSoftmax(CausalSoftmaxMusaDescriptor_t desc,
                                    void *stream);
 
 infiniopStatus_t musaDestroyCausalSoftmaxDescriptor(CausalSoftmaxMusaDescriptor_t desc);
-
 #endif
