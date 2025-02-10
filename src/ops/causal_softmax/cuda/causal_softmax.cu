@@ -16,6 +16,12 @@ struct AttentionCausualMask {
     }
 };
 
+struct MaxOp {
+    __device__ float operator()(const float a, const float b) const {
+        return a > b ? a: b;
+    }
+};
+
 template<unsigned int BLOCK_SIZE, class Tdata, class Tmask>
 static __device__ void block_padding(
     Tdata *__restrict__ att,
@@ -33,7 +39,12 @@ static __device__ void block_padding(
 
     __shared__ float max;
     {
+#ifdef ENABLE_SUGON_DCU
+        MaxOp max_op;
+        auto acc = block_op.Reduce(thread_data, max_op, total_seq_len);
+#else
         auto acc = block_op.Reduce(thread_data, cub::Max(), total_seq_len);
+#endif
         if (threadIdx.x == 0) { max = acc; }
     }
     __syncthreads();
@@ -67,7 +78,12 @@ static __device__ void block_folding(
         thread_data[i] = att_idx < total_seq_len && mask(token_idx, seq_len, att_idx, total_seq_len)
                              ? float(att[i])
                              : -__FLT_MAX__;
+#ifdef ENABLE_SUGON_DCU
+        MaxOp max_op;
+        thread_max = max_op(thread_max, thread_data[i]);
+#else
         thread_max = cub::Max()(thread_max, thread_data[i]);
+#endif
     }
 
     using BlockOp = cub::BlockReduce<float, BLOCK_SIZE>;
@@ -76,7 +92,12 @@ static __device__ void block_folding(
 
     __shared__ float max;
     {
+#ifdef ENABLE_SUGON_DCU
+        MaxOp max_op;
+        auto acc = block_op.Reduce(thread_max, max_op);
+#else
         auto acc = block_op.Reduce(thread_max, cub::Max());
+#endif
         if (threadIdx.x == 0) { max = acc; }
     }
     __syncthreads();
@@ -130,7 +151,7 @@ static __forceinline__ __device__ void folding(
 }
 
 template<unsigned int BLOCK_SIZE, class Tdata>
-__global__ void fused_softmax_padding(
+__launch_bounds__(MAX_THREADS_PER_BLOCK) __global__ void fused_softmax_padding(
     Tdata *__restrict__ att,
     unsigned int const stride_x,
     unsigned int const stride_y,
@@ -140,7 +161,7 @@ __global__ void fused_softmax_padding(
 }
 
 template<unsigned int BLOCK_SIZE, unsigned int ITEMS_PER_THREAD, class Tdata>
-__global__ void fused_softmax_folding(
+__launch_bounds__(MAX_THREADS_PER_BLOCK) __global__ void fused_softmax_folding(
     Tdata *__restrict__ att,
     unsigned int const stride_x,
     unsigned int const stride_y,
@@ -152,7 +173,7 @@ __global__ void fused_softmax_folding(
 }
 
 template<unsigned int BLOCK_SIZE, class Tdata>
-__global__ void fused_softmax_standard(
+__launch_bounds__(MAX_THREADS_PER_BLOCK) __global__ void fused_softmax_standard(
     Tdata *__restrict__ att_,
     unsigned int const stride_x,
     unsigned int const stride_y,
@@ -183,7 +204,12 @@ __global__ void fused_softmax_standard(
         __syncthreads();
         // Block reduce max
         {
+#ifdef ENABLE_SUGON_DCU
+            MaxOp max_op;
+            auto acc = block_op.Reduce(partial, max_op);
+#else
             auto acc = block_op.Reduce(partial, cub::Max());
+#endif
             if (threadIdx.x == 0) { max_ = acc; }
         }
         __syncthreads();
@@ -200,7 +226,11 @@ __global__ void fused_softmax_standard(
 
         // Block reduce sum
         {
+#ifdef ENABLE_SUGON_DCU
+            auto acc = block_op.Sum(partial);
+#else
             auto acc = block_op.Reduce(partial, cub::Sum());
+#endif
             if (threadIdx.x == 0) { sum_ = acc; }
         }
         __syncthreads();

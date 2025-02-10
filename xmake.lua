@@ -48,6 +48,14 @@ option("metax-gpu")
 option_end()
 
 
+option("sugon-dcu")
+    set_default(false)
+    set_showmenu(true)
+    set_description("Enable or disable Sugon DCU kernel")
+    add_defines("ENABLE_SUGON_DCU")
+    add_defines("ENABLE_NV_GPU")
+option_end()
+
 if is_mode("debug") then
     add_cxflags("-g -O0")
     add_defines("DEBUG_MODE")
@@ -74,9 +82,11 @@ if has_config("cpu") then
 
 end
 
-if has_config("nv-gpu") then
-
+if has_config("nv-gpu", "sugon-dcu") then
     add_defines("ENABLE_NV_GPU")
+    if has_config("sugon-dcu") then
+        add_defines("ENABLE_SUGON_DCU")
+    end
     local CUDA_ROOT = os.getenv("CUDA_ROOT") or os.getenv("CUDA_HOME") or os.getenv("CUDA_PATH")
     local CUDNN_ROOT = os.getenv("CUDNN_ROOT") or os.getenv("CUDNN_HOME") or os.getenv("CUDNN_PATH")
     if CUDA_ROOT ~= nil then
@@ -267,6 +277,11 @@ if has_config("metax-gpu") then
 
 end
 
+
+toolchain("sugon-dcu-linker")
+    set_toolset("sh", "nvcc")
+toolchain_end()
+
 target("infiniop")
     set_kind("shared")
 
@@ -276,6 +291,21 @@ target("infiniop")
     if has_config("nv-gpu") then
         add_deps("nv-gpu")
     end
+    if has_config("sugon-dcu") then
+        local builddir = string.format(
+            "build/%s/%s/%s",
+            get_config("plat"),
+            get_config("arch"),
+            get_config("mode")
+        )
+        add_shflags("-s", "-shared", "-fPIC")
+        add_links("cublas", "cudnn", "cudadevrt", "cudart_static", "rt", "pthread", "dl")
+        -- Using -lnv-gpu will fail, manually link the target using full path
+        add_deps("nv-gpu", {inherit = false})
+        add_links(builddir.."/libnv-gpu.a")
+        set_toolchains("sugon-dcu-linker")
+    end
+
     if has_config("cambricon-mlu") then
         add_deps("cambricon-mlu")
     end
