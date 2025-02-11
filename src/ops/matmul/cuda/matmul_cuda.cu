@@ -1,25 +1,36 @@
-#include "../../../devices/cuda/handle_pool.h"
+#include "../../../devices/cuda/cuda_handle.h"
 #include "../../utils.h"
 #include "../blas.h"
 #include "matmul_cuda.h"
 #include <cublas_v2.h>
 #include <cuda_fp16.h>
 
-MatmulCudaDescriptor::MatmulCudaDescriptor(Device device) {
-    this->device = device;
-    get_cublas_pool();
-}
+template<typename Tdata>
+infiniopStatus_t matmul_cuda(MatmulCudaDescriptor_t desc, void *c, float beta, void const *a, void const *b, float alpha, void *stream) {
+    auto info = desc->info;
 
-void matmul_nv_gpu_f16(Tensor c, float beta, Tensor a, Tensor b, float alpha, void *stream) {
-    auto info = MatmulInfo(c, a, b);
+    if (info.is_transed) {
+        std::swap(a, b);
+    }
 
-    auto alpha_f16 = __float2half(alpha);
-    auto beta_f16 = __float2half(beta);
+    cudaDataType a_type, b_type, c_type;
+    cublasComputeType_t compute_type;
+    if constexpr (std::is_same<Tdata, half>::value) {
+        a_type = b_type = c_type = CUDA_R_16F;
+        compute_type = CUBLAS_COMPUTE_32F;
+    } else {
+        a_type = b_type = c_type = CUDA_R_32F;
+#ifdef ENABLE_SUGON_DCU
+        compute_type = CUBLAS_COMPUTE_32F;
+#else
+        compute_type = CUBLAS_COMPUTE_32F_FAST_TF32;
+#endif
+    }
 
     auto op_a = info.a_matrix.row_stride == 1 ? CUBLAS_OP_N : CUBLAS_OP_T;
     auto op_b = info.b_matrix.row_stride == 1 ? CUBLAS_OP_N : CUBLAS_OP_T;
 
-    use_cublas((cudaStream_t) stream,
+    use_cublas(desc->cublas_handles_t, desc->device_id, (cudaStream_t) stream,
                [&](cublasHandle_t handle) { cublasGemmStridedBatchedEx(
                                                 handle,
                                                 op_a,
@@ -27,21 +38,38 @@ void matmul_nv_gpu_f16(Tensor c, float beta, Tensor a, Tensor b, float alpha, vo
                                                 info.m,
                                                 info.n,
                                                 info.k,
-                                                &alpha_f16,
-                                                info.a_ptr,
-                                                CUDA_R_16F,
+                                                &alpha,
+                                                a,
+                                                a_type,
                                                 info.a_matrix.ld(),
                                                 info.a_matrix.stride,
-                                                info.b_ptr,
-                                                CUDA_R_16F,
+                                                b,
+                                                b_type,
                                                 info.b_matrix.ld(),
                                                 info.b_matrix.stride,
-                                                &beta_f16,
-                                                info.c_ptr,
-                                                CUDA_R_16F,
+                                                &beta,
+                                                c,
+                                                c_type,
                                                 info.c_matrix.ld(),
                                                 info.c_matrix.stride,
                                                 info.batch,
-                                                CUBLAS_COMPUTE_16F,
+                                                compute_type,
                                                 CUBLAS_GEMM_DEFAULT_TENSOR_OP); });
+    return STATUS_SUCCESS;
+}
+
+infiniopStatus_t cudaMatmul(MatmulCudaDescriptor_t desc,
+                            void *workspace,
+                            uint64_t workspace_size,
+                            void *c,
+                            void const *a,
+                            void const *b,
+                            void *stream) {
+    if (desc->dtype == F16) {
+        return matmul_cuda<half>(desc, c, desc->beta, a, b, desc->alpha, stream);
+    }
+    if (desc->dtype == F32) {
+        return matmul_cuda<float>(desc, c, desc->beta, a, b, desc->alpha, stream);
+    }
+    return STATUS_BAD_TENSOR_DTYPE;
 }

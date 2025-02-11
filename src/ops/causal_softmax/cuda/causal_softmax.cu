@@ -16,6 +16,12 @@ struct AttentionCausualMask {
     }
 };
 
+struct MaxOp {
+    __device__ float operator()(const float a, const float b) const {
+        return a > b ? a: b;
+    }
+};
+
 template<unsigned int BLOCK_SIZE, class Tdata, class Tmask>
 static __device__ void block_padding(
     Tdata *__restrict__ att,
@@ -33,7 +39,12 @@ static __device__ void block_padding(
 
     __shared__ float max;
     {
+#ifdef ENABLE_SUGON_DCU
+        MaxOp max_op;
+        auto acc = block_op.Reduce(thread_data, max_op, total_seq_len);
+#else
         auto acc = block_op.Reduce(thread_data, cub::Max(), total_seq_len);
+#endif
         if (threadIdx.x == 0) { max = acc; }
     }
     __syncthreads();
@@ -67,7 +78,12 @@ static __device__ void block_folding(
         thread_data[i] = att_idx < total_seq_len && mask(token_idx, seq_len, att_idx, total_seq_len)
                              ? float(att[i])
                              : -__FLT_MAX__;
+#ifdef ENABLE_SUGON_DCU
+        MaxOp max_op;
+        thread_max = max_op(thread_max, thread_data[i]);
+#else
         thread_max = cub::Max()(thread_max, thread_data[i]);
+#endif
     }
 
     using BlockOp = cub::BlockReduce<float, BLOCK_SIZE>;
@@ -76,7 +92,12 @@ static __device__ void block_folding(
 
     __shared__ float max;
     {
+#ifdef ENABLE_SUGON_DCU
+        MaxOp max_op;
+        auto acc = block_op.Reduce(thread_max, max_op);
+#else
         auto acc = block_op.Reduce(thread_max, cub::Max());
+#endif
         if (threadIdx.x == 0) { max = acc; }
     }
     __syncthreads();
@@ -130,7 +151,7 @@ static __forceinline__ __device__ void folding(
 }
 
 template<unsigned int BLOCK_SIZE, class Tdata>
-__global__ void fused_softmax_padding(
+__launch_bounds__(MAX_THREADS_PER_BLOCK) __global__ void fused_softmax_padding(
     Tdata *__restrict__ att,
     unsigned int const stride_x,
     unsigned int const stride_y,
@@ -140,7 +161,7 @@ __global__ void fused_softmax_padding(
 }
 
 template<unsigned int BLOCK_SIZE, unsigned int ITEMS_PER_THREAD, class Tdata>
-__global__ void fused_softmax_folding(
+__launch_bounds__(MAX_THREADS_PER_BLOCK) __global__ void fused_softmax_folding(
     Tdata *__restrict__ att,
     unsigned int const stride_x,
     unsigned int const stride_y,
@@ -152,7 +173,7 @@ __global__ void fused_softmax_folding(
 }
 
 template<unsigned int BLOCK_SIZE, class Tdata>
-__global__ void fused_softmax_standard(
+__launch_bounds__(MAX_THREADS_PER_BLOCK) __global__ void fused_softmax_standard(
     Tdata *__restrict__ att_,
     unsigned int const stride_x,
     unsigned int const stride_y,
@@ -183,7 +204,12 @@ __global__ void fused_softmax_standard(
         __syncthreads();
         // Block reduce max
         {
+#ifdef ENABLE_SUGON_DCU
+            MaxOp max_op;
+            auto acc = block_op.Reduce(partial, max_op);
+#else
             auto acc = block_op.Reduce(partial, cub::Max());
+#endif
             if (threadIdx.x == 0) { max_ = acc; }
         }
         __syncthreads();
@@ -200,7 +226,11 @@ __global__ void fused_softmax_standard(
 
         // Block reduce sum
         {
+#ifdef ENABLE_SUGON_DCU
+            auto acc = block_op.Sum(partial);
+#else
             auto acc = block_op.Reduce(partial, cub::Sum());
+#endif
             if (threadIdx.x == 0) { sum_ = acc; }
         }
         __syncthreads();
@@ -218,31 +248,41 @@ __global__ void fused_softmax_standard(
 }
 
 
-void causal_softmax_nv_gpu_f16(CausalSoftmaxCudaDescriptor *desc, Tensor y, void *stream) {
-    // TODO: only support 2d or 3d tensor
-    ASSERT(y.layout->ndim == 2 || y.layout->ndim == 3);
-    uint64_t total_seq_len = y.layout->shape[y.layout->ndim - 1];
-    uint64_t seq_len = y.layout->shape[y.layout->ndim - 2];
-    uint64_t batch_size = 1;
-    uint64_t stride_x = 1;
-    uint64_t stride_y = y.layout->strides[y.layout->ndim - 2] / 2;
-    uint64_t stride_z = y.layout->strides[y.layout->ndim - 1] / 2;
-    ASSERT(stride_z == 1); // the last dimension should be contiguous
-    for (size_t i = 0; i < y.layout->ndim - 2; i++) {
-        batch_size *= y.layout->shape[i];
-        stride_x *= y.layout->strides[i];
-    }
-    stride_x /= 2; // covert byte strides to element strides
+void causal_softmax_nv_gpu_f16(CausalSoftmaxCudaDescriptor_t desc, void *y, void *stream) {
+    uint64_t total_seq_len = desc->total_seq_len;
+    uint64_t seq_len = desc->seq_len;
+    uint64_t batch_size = desc->batch_size;
+    uint64_t stride_x = desc->stride_b;
+    uint64_t stride_y = desc->stride_i;
+    uint64_t stride_z = desc->stride_j;// covert byte strides to element strides
+    unsigned int max_items_per_thread = desc->max_items_per_thread;
+
     dim3 grid(batch_size, seq_len);
-    auto max_items_per_thread = ROUND_UP_DIV(total_seq_len, MAX_THREADS_PER_BLOCK);
+
     if (max_items_per_thread == 1) {
         fused_softmax_padding<MAX_THREADS_PER_BLOCK>
-            <<<grid, total_seq_len, 0, (cudaStream_t) stream>>>((half *) (y.data), stride_x, stride_y, stride_z);
+            <<<grid, total_seq_len, 0, (cudaStream_t) stream>>>((half *) (y), stride_x, stride_y, stride_z);
     } else if (max_items_per_thread <= 16) {
         fused_softmax_folding<MAX_THREADS_PER_BLOCK, 16>
-            <<<grid, MAX_THREADS_PER_BLOCK, 0, (cudaStream_t) stream>>>((half *) (y.data), stride_x, stride_y, stride_z, total_seq_len);
+            <<<grid, MAX_THREADS_PER_BLOCK, 0, (cudaStream_t) stream>>>((half *) (y), stride_x, stride_y, stride_z, total_seq_len);
     } else {
         fused_softmax_standard<MAX_THREADS_PER_BLOCK>
-            <<<grid, MAX_THREADS_PER_BLOCK, 0, (cudaStream_t) stream>>>((half *) (y.data), stride_x, stride_y, stride_z, total_seq_len);
+            <<<grid, MAX_THREADS_PER_BLOCK, 0, (cudaStream_t) stream>>>((half *) (y), stride_x, stride_y, stride_z, total_seq_len);
     }
+}
+
+infiniopStatus_t cudaCausalSoftmax(CausalSoftmaxCudaDescriptor_t desc,
+                                   void *workspace,
+                                   uint64_t workspace_size,
+                                   void *data,
+                                   void *stream) {
+    if (cudaSetDevice(desc->device_id) != cudaSuccess) {
+        return STATUS_BAD_DEVICE;
+    }
+    if (dtype_eq(desc->dtype, F16)) {
+        causal_softmax_nv_gpu_f16(desc, data, stream);
+        return STATUS_SUCCESS;
+    }
+
+    return STATUS_BAD_TENSOR_DTYPE;
 }

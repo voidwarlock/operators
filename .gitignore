@@ -13,3 +13,13 @@ __pycache__/
 
 # Lib
 lib/
+out/
+
+# Log
+*.log
+
+# Cache
+cache/
+
+# Json
+*.json

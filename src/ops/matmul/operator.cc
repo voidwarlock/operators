@@ -11,74 +11,172 @@
 #ifdef ENABLE_CAMBRICON_MLU
 #include "bang/matmul_cnnl.h"
 #endif
+#ifdef ENABLE_ASCEND_NPU
+#include "ascend/matmul_aclnn.h"
+#endif
+#ifdef ENABLE_METAX_GPU
+#include "maca/matmul_maca.h"
+#endif
+#ifdef ENABLE_MTHREADS_GPU
+#include "musa/matmul_musa.h"
+#endif
 
-struct MatmulDescriptor {
-    Device device;
-};
-
-__C MatmulDescriptor *createMatmulDescriptor(Device device, void *config) {
-    switch (device) {
+__C infiniopStatus_t infiniopCreateMatmulDescriptor(infiniopHandle_t handle,
+                                                    infiniopMatmulDescriptor_t *desc_ptr,
+                                                    infiniopTensorDescriptor_t c_desc,
+                                                    float alpha,
+                                                    infiniopTensorDescriptor_t a_desc,
+                                                    infiniopTensorDescriptor_t b_desc,
+                                                    float beta) {
+    switch (handle->device) {
 #ifdef ENABLE_CPU
         case DevCpu:
-            return (MatmulDescriptor *) (new MatmulCpuDescriptor{device});
+            return cpuCreateMatmulDescriptor((CpuHandle_t) handle, (MatmulCpuDescriptor_t *) desc_ptr, c_desc, alpha, a_desc, b_desc, beta);
 #endif
 #ifdef ENABLE_NV_GPU
         case DevNvGpu: {
-            return (MatmulDescriptor *) (new MatmulCudaDescriptor(device));
+            return cudaCreateMatmulDescriptor((CudaHandle_t) handle, (MatmulCudaDescriptor_t *) desc_ptr, c_desc, alpha, a_desc, b_desc, beta);
         }
 #endif
 #ifdef ENABLE_CAMBRICON_MLU
         case DevCambriconMlu: {
-            return (MatmulDescriptor *) (new MatmulBangDescriptor(device));
+            return bangCreateMatmulDescriptor((BangHandle_t) handle, (MatmulBangDescriptor_t *) desc_ptr, c_desc, alpha, a_desc, b_desc, beta);
         }
 #endif
-        default:
-            PANIC(UnsupportedDevice);
+#ifdef ENABLE_ASCEND_NPU
+        case DevAscendNpu: {
+            return aclnnCreateMatmulDescriptor((AscendHandle_t) handle,
+                                               (MatmulAclnnDescriptor_t *) desc_ptr,
+                                               c_desc,
+                                               alpha,
+                                               a_desc,
+                                               b_desc,
+                                               beta,
+                                               1);
+        }
+#endif
+#ifdef ENABLE_METAX_GPU
+        case DevMetaxGpu: {
+            return macaCreateMatmulDescriptor((MacaHandle_t) handle, (MatmulMacaDescriptor_t *) desc_ptr, c_desc, alpha, a_desc, b_desc, beta);
+        }
+#endif
+#ifdef ENABLE_MTHREADS_GPU
+        case DevMthreadsGpu: {
+            return musaCreateMatmulDescriptor((MusaHandle_t) handle, (MatmulMusaDescriptor_t *) desc_ptr, c_desc, alpha, a_desc, b_desc, beta);   
+        }
+#endif
     }
-    return nullptr;
+    return STATUS_BAD_DEVICE;
 }
 
-__C void destroyMatmulDescriptor(MatmulDescriptor *descriptor) {
-    switch (descriptor->device) {
+__C infiniopStatus_t infiniopGetMatmulWorkspaceSize(infiniopMatmulDescriptor_t desc, uint64_t *size) {
+    switch (desc->device) {
 #ifdef ENABLE_CPU
         case DevCpu:
-            delete (MatmulCpuDescriptor *) (descriptor);
-            break;
+            return cpuGetMatmulWorkspaceSize((MatmulCpuDescriptor_t) desc, size);
 #endif
 #ifdef ENABLE_NV_GPU
-        case DevNvGpu:
-            delete (MatmulCudaDescriptor *) (descriptor);
-            break;
+        case DevNvGpu: {
+            return cudaGetMatmulWorkspaceSize((MatmulCudaDescriptor_t) desc, size);
+        }
+
 #endif
 #ifdef ENABLE_CAMBRICON_MLU
         case DevCambriconMlu: {
-            delete (MatmulBangDescriptor *) (descriptor);
-            break;
+            return bangGetMatmulWorkspaceSize((MatmulBangDescriptor_t) desc, size);
         }
 #endif
-        default:
-            PANIC(UnsupportedDevice);
+#ifdef ENABLE_ASCEND_NPU
+        case DevAscendNpu: {
+            return aclnnGetMatmulWorkspaceSize((MatmulAclnnDescriptor_t) desc,
+                                               size);
+        }
+#endif
+#ifdef ENABLE_METAX_GPU
+        case DevMetaxGpu: {
+            return macaGetMatmulWorkspaceSize((MatmulMacaDescriptor_t) desc, size);
+        }
+#endif
+#ifdef ENABLE_MTHREADS_GPU
+        case DevMthreadsGpu: {
+            return musaGetMatmulWorkspaceSize((MatmulMusaDescriptor_t) desc, size);
+        }
+#endif
     }
+    return STATUS_BAD_DEVICE;
 }
 
-__C void matmul(MatmulDescriptor *descriptor, Tensor c, float beta, Tensor a, Tensor b, float alpha, void *stream) {
-    switch (descriptor->device) {
+__C infiniopStatus_t infiniopMatmul(infiniopMatmulDescriptor_t desc, void *workspace, uint64_t workspace_size, void *c, void const *a, void const *b, void *stream) {
+    switch (desc->device) {
 #ifdef ENABLE_CPU
         case DevCpu:
-            matmul_cpu_f16(c, beta, a, b, alpha);
-            break;
+            return cpuMatmul((MatmulCpuDescriptor_t) desc, workspace, workspace_size, c, a, b);
 #endif
 #ifdef ENABLE_NV_GPU
         case DevNvGpu:
-            matmul_nv_gpu_f16(c, beta, a, b, alpha, stream);
-            break;
+            return cudaMatmul((MatmulCudaDescriptor_t) desc, workspace, workspace_size, c, a, b, stream);
 #endif
 #ifdef ENABLE_CAMBRICON_MLU
-        case DevCambriconMlu:
-            matmul_cnnl_f16(c, beta, a, b, alpha, stream);
-            break;
+        case DevCambriconMlu: {
+            return bangMatmul((MatmulBangDescriptor_t) desc, workspace, workspace_size, c, a, b, stream);
+        }
 #endif
-        default:
-            PANIC(UnsupportedDevice);
+#ifdef ENABLE_ASCEND_NPU
+        case DevAscendNpu:
+            return aclnnMatmul((MatmulAclnnDescriptor_t) desc,
+                               workspace,
+                               workspace_size,
+                               c,
+                               a,
+                               b,
+                               stream);
+#endif
+#ifdef ENABLE_METAX_GPU
+        case DevMetaxGpu: {
+            return macaMatmul((MatmulMacaDescriptor_t) desc, workspace, workspace_size, c, a, b, stream);
+        }
+#endif
+#ifdef ENABLE_MTHREADS_GPU
+        case DevMthreadsGpu: {
+            return musaMatmul((MatmulMusaDescriptor_t) desc, workspace, workspace_size, c, a, b, stream);
+        }
+#endif
     }
+    return STATUS_BAD_DEVICE;
+}
+
+__C infiniopStatus_t infiniopDestroyMatmulDescriptor(infiniopMatmulDescriptor_t desc) {
+    switch (desc->device) {
+#ifdef ENABLE_CPU
+        case DevCpu:
+            return cpuDestroyMatmulDescriptor((MatmulCpuDescriptor_t) desc);
+#endif
+#ifdef ENABLE_NV_GPU
+        case DevNvGpu: {
+            return cudaDestroyMatmulDescriptor((MatmulCudaDescriptor_t) desc);
+        }
+
+#endif
+#ifdef ENABLE_CAMBRICON_MLU
+        case DevCambriconMlu: {
+            return bangDestroyMatmulDescriptor((MatmulBangDescriptor_t) desc);
+        }
+#endif
+#ifdef ENABLE_ASCEND_NPU
+        case DevAscendNpu: {
+            return aclnnDestroyMatmulDescriptor((MatmulAclnnDescriptor_t) desc);
+        }
+#endif
+#ifdef ENABLE_METAX_GPU
+        case DevMetaxGpu: {
+            return macaDestroyMatmulDescriptor((MatmulMacaDescriptor_t) desc);
+        }
+#endif
+#ifdef ENABLE_MTHREADS_GPU
+        case DevMthreadsGpu: {
+            return musaDestroyMatmulDescriptor((MatmulMusaDescriptor_t) desc);
+        }
+#endif
+    }
+    return STATUS_BAD_DEVICE;
 }
